@@ -11,7 +11,7 @@ if isrow(w)
 end
 
 w=sqrt(w);
-w = repmat(w,1,size(M,2));
+w = repmat(w,1,size(M,1))';
 U=w.*V;
 W=w.*M;
 B=W*U';

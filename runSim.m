@@ -13,7 +13,7 @@ for k = 0:length(0:dt:tf)
     T = R_P2I*T;
     N = R_P2I*N;
 
-    [V,M,w]=generateMeasurementMatrix(x,currentTime,0);
+    [V,M,measW]=generateMeasurementMatrix(x,currentTime,0);
 
     % Determine the desired attitude
     qDesired=desiredAttitude(pointingPrincipal,x(8:10)',x(1:4)');
@@ -23,8 +23,11 @@ for k = 0:length(0:dt:tf)
     magneticTorque = magneticTorques(x, currentTime);
     solarTorque = solarTorques(x, geometryPrincipalFrame);
     aeroTorque = aeroTorques(x, geometryPrincipalFrame);
+
+    % Attitude estimation
     [attitudeErr,~]=attitudeError(qDesired,x(1:4));
     attitudeEstimate=deterministicAttitude(M,V);
+    %attitudeEstimateq=qmethod(M,V,measW);
 
 
     % Total torque acting on the satellite

@@ -19,7 +19,7 @@ Ixx=I_principal(1,1);
 Iyy=I_principal(2,2);
 Izz=I_principal(3,3);
 
-R_B2P=R_P2B;
+R_B2P=R_P2B.';
 
 pointingBody=[0;1;0];
 pointingPrincipal=(R_P2B')*pointingBody;

@@ -89,133 +89,140 @@ for i=1:length(q0)
 
     % Find Euler angles from quaternion
     euler_angles(:,i) = quat2eul([q0c,q1c,q2c,q3c], 'ZYX');
-
+    eulerAnglesError(:,i)= quat2eul([attitudeErrorLog(1,i),attitudeErrorLog(2,i),attitudeErrorLog(3,i),attitudeErrorLog(4,i)], 'ZYX');
     T(i)=0.5*[wx(i); wy(i); wz(i)]'*I*[wx(i); wy(i); wz(i)]+ 0.5*IwheelZ*wWheel^2;
     w(i,:)=R_P2C*[wx(i);wy(i);wz(i)];
 
 end
 
-figure; grid on; hold on;
-sc = 10000;
-quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), principalX(1,1:sc:end), principalX(2,1:sc:end), principalX(3,1:sc:end));
-quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), principalY(1,1:sc:end), principalY(2,1:sc:end), principalY(3,1:sc:end));
-quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), principalZ(1,1:sc:end), principalZ(2,1:sc:end), principalZ(3,1:sc:end));
-% 
-% quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), bodyX(1,1:sc:end), bodyX(2,1:sc:end), bodyX(3,1:sc:end));
-% quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), bodyY(1,1:sc:end), bodyY(2,1:sc:end), bodyY(3,1:sc:end));
-% quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), bodyZ(1,1:sc:end), bodyZ(2,1:sc:end), bodyZ(3,1:sc:end));
-
-% quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), lvlhX(1,1:sc:end), lvlhX(2,1:sc:end), lvlhX(3,1:sc:end), 2.5, AutoScale="off");
-% quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), lvlhY(1,1:sc:end), lvlhY(2,1:sc:end), lvlhY(3,1:sc:end), 2.5, AutoScale="off");
-% quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), lvlhZ(1,1:sc:end), lvlhZ(2,1:sc:end), lvlhZ(3,1:sc:end), 2.5, AutoScale="off");
-
-figure; grid on; hold on;
-title("Angular Momentum: Inertial Frame")
-plot(tLog, AngMomInertial(1,:))
-plot(tLog, AngMomInertial(2,:))
-plot(tLog, AngMomInertial(3,:))
-legend("$\vec{H} \cdot \hat{n}_x$", "$\vec{H} \cdot \hat{n}_y$", "$\vec{H} \cdot \hat{n}_z$", 'FontSize', 15, Interpreter="latex")
-xlabel("Time (s)")
-ylabel("Angular Momentum (kgm^2/s)")
-xlim([0,tLog(end)])
-
-figure; grid on; hold on;
-sc = 10;
-origin = zeros(1, length(tLog));
-plot3(AngVelInertial(1,1:sc:end), AngVelInertial(2,1:sc:end), AngVelInertial(3,1:sc:end));
-quiver3(origin(1:sc:end), origin(1:sc:end), origin(1:sc:end), 0.0005*AngMomInertial(1,1:sc:end), 0.0005*AngMomInertial(2,1:sc:end), 0.0005*AngMomInertial(3,1:sc:end));
-axis equal
-legend("Herpolhode", "Angular Momentum Vector")
-% 
-% figure;
-% subplot(3,1,1); grid on; hold on;
-% sc = 10;
-% quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), principalX(1,1:sc:end), principalX(2,1:sc:end), principalX(3,1:sc:end));
-% quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), principalY(1,1:sc:end), principalY(2,1:sc:end), principalY(3,1:sc:end));
-% quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), principalZ(1,1:sc:end), principalZ(2,1:sc:end), principalZ(3,1:sc:end));
-% axis equal
-% legend('Principal X','Principal Y','Principal Z')
-% 
-% subplot(3,1,2); grid on; hold on;
-% quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), bodyX(1,1:sc:end), bodyX(2,1:sc:end), bodyX(3,1:sc:end));
-% quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), bodyY(1,1:sc:end), bodyY(2,1:sc:end), bodyY(3,1:sc:end));
-% quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), bodyZ(1,1:sc:end), bodyZ(2,1:sc:end), bodyZ(3,1:sc:end));
-% axis equal
-% legend('Body X','Body Y','Body Z')
-% 
-% subplot(3,1,3); grid on; hold on;
-% quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), lvlhX(1,1:sc:end), lvlhX(2,1:sc:end), lvlhX(3,1:sc:end));
-% quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), lvlhY(1,1:sc:end), lvlhY(2,1:sc:end), lvlhY(3,1:sc:end));
-% quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), lvlhZ(1,1:sc:end), lvlhZ(2,1:sc:end), lvlhZ(3,1:sc:end));
-% axis equal
-% xlabel('Time (s)')
-% legend('LVLH X','LVLH Y','LVLH Z')
-% linkaxes
-
-figure; grid on; hold on;
-title("Quaternion Parameters")
-plot(tLog, q0)
-plot(tLog, q1)
-plot(tLog, q2)
-plot(tLog, q3)
-xlabel('Time (s)')
-legend('q_0', 'q_1', 'q_2', 'q_3')
-xlim([0,tLog(end)])
-
-figure; grid on; hold on;
-title("Angular velocities")
-plot(tLog, wx)
-plot(tLog, wy)
-plot(tLog, wz)
-xlabel('Time (s)')
-legend('\omega_x', '\omega_y', '\omega_z')
-xlim([0,tLog(end)])
-
-figure; grid on; hold on;
-title("Torque")
-plot(tLog, ux)
-plot(tLog, uy)
-plot(tLog, uz)
-xlabel('Time (s)')
-legend('M_x', 'M_y', 'M_z')
-xlim([0,tLog(end)])
-ylim([-0.1 0.1])
-
-figure; grid on; hold on;
-title("Euler angles ZYX order")
-plot(tLog, euler_angles)
-xlabel('Time (s)')
-legend('\phi', '\theta', '\psi')
-xlim([0,tLog(end)])
-
-
-figure; grid on; hold on;
-title("RTN ref frame")
-plot(tLog, lvlhX)
-plot(tLog, lvlhY)
-plot(tLog, lvlhZ)
-xlabel('Time (s)')
-legend('$R_x$', '$T_y$', '$N_z$')
-xlim([0,tLog(end)])
-
-
-figure; grid on; hold on;
-title("Attitude error")
-plot(tLog, q0)
-plot(tLog, q1)
-plot(tLog, q2)
-plot(tLog, q3)
-xlabel('Time (s)')
-legend('q_1', 'q_2', 'q_3','q_4')
-xlim([0,tLog(end)])
-
-
 % figure; grid on; hold on;
-% title("Angular Momentum: Principal Frame")
-% plot(tLog, AngMomPrincipal(1,:))
-% plot(tLog, AngMomPrincipal(2,:))
-% plot(tLog, AngMomPrincipal(3,:))
+% sc = 10000;
+% quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), principalX(1,1:sc:end), principalX(2,1:sc:end), principalX(3,1:sc:end));
+% quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), principalY(1,1:sc:end), principalY(2,1:sc:end), principalY(3,1:sc:end));
+% quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), principalZ(1,1:sc:end), principalZ(2,1:sc:end), principalZ(3,1:sc:end));
+% % 
+% % quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), bodyX(1,1:sc:end), bodyX(2,1:sc:end), bodyX(3,1:sc:end));
+% % quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), bodyY(1,1:sc:end), bodyY(2,1:sc:end), bodyY(3,1:sc:end));
+% % quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), bodyZ(1,1:sc:end), bodyZ(2,1:sc:end), bodyZ(3,1:sc:end));
+% 
+% % quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), lvlhX(1,1:sc:end), lvlhX(2,1:sc:end), lvlhX(3,1:sc:end), 2.5, AutoScale="off");
+% % quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), lvlhY(1,1:sc:end), lvlhY(2,1:sc:end), lvlhY(3,1:sc:end), 2.5, AutoScale="off");
+% % quiver3(px(1:sc:end), py(1:sc:end), pz(1:sc:end), lvlhZ(1,1:sc:end), lvlhZ(2,1:sc:end), lvlhZ(3,1:sc:end), 2.5, AutoScale="off");
+% 
+% figure; grid on; hold on;
+% title("Angular Momentum: Inertial Frame")
+% plot(tLog, AngMomInertial(1,:))
+% plot(tLog, AngMomInertial(2,:))
+% plot(tLog, AngMomInertial(3,:))
 % legend("$\vec{H} \cdot \hat{n}_x$", "$\vec{H} \cdot \hat{n}_y$", "$\vec{H} \cdot \hat{n}_z$", 'FontSize', 15, Interpreter="latex")
 % xlabel("Time (s)")
 % ylabel("Angular Momentum (kgm^2/s)")
 % xlim([0,tLog(end)])
+% 
+% figure; grid on; hold on;
+% sc = 10;
+% origin = zeros(1, length(tLog));
+% plot3(AngVelInertial(1,1:sc:end), AngVelInertial(2,1:sc:end), AngVelInertial(3,1:sc:end));
+% quiver3(origin(1:sc:end), origin(1:sc:end), origin(1:sc:end), 0.0005*AngMomInertial(1,1:sc:end), 0.0005*AngMomInertial(2,1:sc:end), 0.0005*AngMomInertial(3,1:sc:end));
+% axis equal
+% legend("Herpolhode", "Angular Momentum Vector")
+% % 
+% % figure;
+% % subplot(3,1,1); grid on; hold on;
+% % sc = 10;
+% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), principalX(1,1:sc:end), principalX(2,1:sc:end), principalX(3,1:sc:end));
+% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), principalY(1,1:sc:end), principalY(2,1:sc:end), principalY(3,1:sc:end));
+% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), principalZ(1,1:sc:end), principalZ(2,1:sc:end), principalZ(3,1:sc:end));
+% % axis equal
+% % legend('Principal X','Principal Y','Principal Z')
+% % 
+% % subplot(3,1,2); grid on; hold on;
+% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), bodyX(1,1:sc:end), bodyX(2,1:sc:end), bodyX(3,1:sc:end));
+% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), bodyY(1,1:sc:end), bodyY(2,1:sc:end), bodyY(3,1:sc:end));
+% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), bodyZ(1,1:sc:end), bodyZ(2,1:sc:end), bodyZ(3,1:sc:end));
+% % axis equal
+% % legend('Body X','Body Y','Body Z')
+% % 
+% % subplot(3,1,3); grid on; hold on;
+% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), lvlhX(1,1:sc:end), lvlhX(2,1:sc:end), lvlhX(3,1:sc:end));
+% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), lvlhY(1,1:sc:end), lvlhY(2,1:sc:end), lvlhY(3,1:sc:end));
+% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), lvlhZ(1,1:sc:end), lvlhZ(2,1:sc:end), lvlhZ(3,1:sc:end));
+% % axis equal
+% % xlabel('Time (s)')
+% % legend('LVLH X','LVLH Y','LVLH Z')
+% % linkaxes
+% 
+% figure; grid on; hold on;
+% title("Quaternion Parameters")
+% plot(tLog, q0)
+% plot(tLog, q1)
+% plot(tLog, q2)
+% plot(tLog, q3)
+% xlabel('Time (s)')
+% legend('q_0', 'q_1', 'q_2', 'q_3')
+% xlim([0,tLog(end)])
+% 
+% figure; grid on; hold on;
+% title("Angular velocities")
+% plot(tLog, wx)
+% plot(tLog, wy)
+% plot(tLog, wz)
+% xlabel('Time (s)')
+% legend('\omega_x', '\omega_y', '\omega_z')
+% xlim([0,tLog(end)])
+% 
+% figure; grid on; hold on;
+% title("Torque")
+% plot(tLog, ux)
+% plot(tLog, uy)
+% plot(tLog, uz)
+% xlabel('Time (s)')
+% legend('M_x', 'M_y', 'M_z')
+% xlim([0,tLog(end)])
+% ylim([-0.1 0.1])
+% 
+% figure; grid on; hold on;
+% title("Euler angles ZYX order")
+% plot(tLog, euler_angles)
+% xlabel('Time (s)')
+% legend('\phi', '\theta', '\psi')
+% xlim([0,tLog(end)])
+% 
+% 
+% figure; grid on; hold on;
+% title("RTN ref frame")
+% plot(tLog, lvlhX)
+% plot(tLog, lvlhY)
+% plot(tLog, lvlhZ)
+% xlabel('Time (s)')
+% legend('$R_x$', '$T_y$', '$N_z$')
+% xlim([0,tLog(end)])
+% 
+% 
+% figure; grid on; hold on;
+% title("Attitude error")
+% plot(tLog, q0)
+% plot(tLog, q1)
+% plot(tLog, q2)
+% plot(tLog, q3)
+% xlabel('Time (s)')
+% legend('q_1', 'q_2', 'q_3','q_4')
+% xlim([0,tLog(end)])
+% 
+% 
+% % figure; grid on; hold on;
+% % title("Angular Momentum: Principal Frame")
+% % plot(tLog, AngMomPrincipal(1,:))
+% % plot(tLog, AngMomPrincipal(2,:))
+% % plot(tLog, AngMomPrincipal(3,:))
+% % legend("$\vec{H} \cdot \hat{n}_x$", "$\vec{H} \cdot \hat{n}_y$", "$\vec{H} \cdot \hat{n}_z$", 'FontSize', 15, Interpreter="latex")
+% % xlabel("Time (s)")
+% % ylabel("Angular Momentum (kgm^2/s)")
+% % xlim([0,tLog(end)])
+
+figure; grid on; hold on;
+title("Euler angles ZYX order")
+plot(tLog, eulerAnglesError)
+xlabel('Time (s)')
+legend('\phi', '\theta', '\psi')
+xlim([0,tLog(end)])
