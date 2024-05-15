@@ -1,4 +1,4 @@
-function [R_B2I] = principal_to_inertia(q)
+function [R_B2I] = principal2Inertial(q)
 %PRINCIPAL_TO_INERTIA Generates the matrix to go from principal to inertial
 %frame
 %   INPUT : quaternions

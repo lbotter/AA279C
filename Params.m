@@ -44,30 +44,23 @@ dt = T/100000;
 % Final time
 tf = 3*T;  
 
-%{
-%Uncomment for rotation at orbit speed aroun earth
-w0=2*pi/(24*3600);
-w0=w0*r;
-epsilon=0.001;
-w0=w0+epsilon*ones(size(w0));
-%}
 
-% Momentum wheel parameters
-% 
-% IwheelZ = 5;  % kg*m^2
-% wWheel = 100; % rad/s
-IwheelZ=0;
-wWheel=0;
-% Momentum wheel perturbation
-% w0=w0+ones(size(w0))*epsilon;
+% 3D geometry
+geometryBodyFrame = readmatrix('barycenter.xlsx');
+geometryPrincipalFrame = zeros(size(geometryBodyFrame));
+% process geometry into principal frame
+for i = 1:size(geometryBodyFrame, 1)
+    currRow = geometryBodyFrame(i,:);
+    coordinates = currRow(1:3);
+    area = currRow(4);
+    unitNormal = currRow(5:7);
 
-% principal2inertial rotation matrix
-vi = principal_to_inertia(q0).'*viInertial;
+    coordPrincipal = R_B2P*coordinates(:);
+    unitNormalPrincipal = R_B2P*unitNormal(:);
 
-% Momentum acting on the body
-M=[0,0,0];
-% Pointing of the rotor respect to the principal reference frame
-r=r_principal;
+    geometryPrincipalFrame(i,:) = [coordPrincipal; area; unitNormalPrincipal];
+end
+
 
 %% Pre_processing
 
@@ -94,8 +87,8 @@ magneticTorqueLog= zeros(3,(ceil(tf/dt))+2);
 solarTorqueLog= zeros(3,(ceil(tf/dt))+2);
 aeroTorqueLog = zeros(3,(ceil(tf/dt))+2);
 
-% Onboard Estimae
-attitudeErrorLog(:,k+1) = norm(attitudeError);
-attitudeEstimateLog(:,k+1) = norm(attitudeEstimate);
+% Onboard Estimate in quaternion
+attitudeErrorLog = zeros(4,(ceil(tf/dt))+2);
+attitudeEstimateLog = zeros(4,(ceil(tf/dt))+2);
 
 u = [0; 0; 0; 0; 0; 0];

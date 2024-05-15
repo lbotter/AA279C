@@ -3,13 +3,16 @@ close all;
 clc;
 clear;
 % Load the parameters
-
+Params
 %%
 % Test the error function
-q_desired=[1 0 0 0]';
+
+% pointing vector of the antenna in principal axis
+r=[0.0630,-0.9979,0.0136];
+q_desired=[0 1 0 0];
+% 
+
 q_desired=q_desired/norm(q_desired);
-[qe,DCM]=attitude_error(q_desired,q0);
-plot_error_ellipsoid(DCM);
 
 % Load the parameters
 runSim;

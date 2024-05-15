@@ -1,5 +1,4 @@
 %% Run Simulation
-Params;
 % Main loop
 for k = 0:length(0:dt:tf)
 
@@ -21,9 +20,8 @@ for k = 0:length(0:dt:tf)
     magneticTorque = magneticTorques(x, currentTime);
     solarTorque = solarTorques(x, geometryPrincipalFrame);
     aeroTorque = aeroTorques(x, geometryPrincipalFrame);
-    attitudeError=attitude_error(q_desired,x(1:4));
-    
-    attitudeEstimate=deterministic_attitude(M,V);
+    [attitudeError,~]=attitude_error(q_desired,x(1:4));
+    % attitudeEstimate=deterministic_attitude(M,V);
 
     % Total torque acting on the satellite
     u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque;
@@ -37,7 +35,7 @@ for k = 0:length(0:dt:tf)
 
     % Onboard Estimate
     attitudeErrorLog(:,k+1) = norm(attitudeError);
-    attitudeEstimateLog(:,k+1) = norm(attitudeEstimate);
+    % attitudeEstimateLog(:,k+1) = norm(attitudeEstimate);
 
     % GroundTruth
     uLog(:,k+1) = u;
