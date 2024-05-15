@@ -195,7 +195,18 @@ plot(tLog, lvlhX)
 plot(tLog, lvlhY)
 plot(tLog, lvlhZ)
 xlabel('Time (s)')
-legend('\R_x', '\T_y', '\N_z')
+legend('$R_x$', '$T_y$', '$N_z$')
+xlim([0,tLog(end)])
+
+
+figure; grid on; hold on;
+title("Attitude error")
+plot(tLog, q0)
+plot(tLog, q1)
+plot(tLog, q2)
+plot(tLog, q3)
+xlabel('Time (s)')
+legend('q_1', 'q_2', 'q_3','q_4')
 xlim([0,tLog(end)])
 
 

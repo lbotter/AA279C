@@ -1,27 +1,31 @@
 %% Run Simulation
+
 % Main loop
 for k = 0:length(0:dt:tf)
-
     currentTime = tLog(k+1);
-
     R_P2I = principal2Inertial(x(1:4));
-
     % Velocity in inertial frame from principal
     vInertial = R_P2I*[x(11); x(12); x(13)];
-     
     [R,T,N] = inertial2RTN(x(8),x(9),x(10),vInertial);
+    % ASK albert
     R_P2I = inv(R_P2I);
     R = R_P2I*R;
     T = R_P2I*T;
     N = R_P2I*N;
+
+    [V,M,w]=generateMeasurementMatrix(x,currentTime,0);
+
+    % Determine the desired attitude
+    qDesired=desiredAttitude(pointingPrincipal,x(8:10)',x(1:4)');
 
     % u: input, [tx; ty; tz; fx; fy; fz]
     gravityGradientTorque = gravityGradient(I_principal, R, norm([x(8); x(9); x(10)]));
     magneticTorque = magneticTorques(x, currentTime);
     solarTorque = solarTorques(x, geometryPrincipalFrame);
     aeroTorque = aeroTorques(x, geometryPrincipalFrame);
-    [attitudeError,~]=attitude_error(q_desired,x(1:4));
-    % attitudeEstimate=deterministic_attitude(M,V);
+    [attitudeErr,~]=attitudeError(qDesired,x(1:4));
+    attitudeEstimate=deterministicAttitude(M,V);
+
 
     % Total torque acting on the satellite
     u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque;
@@ -34,21 +38,18 @@ for k = 0:length(0:dt:tf)
     aeroTorqueLog(:,k+1) = norm(aeroTorque);
 
     % Onboard Estimate
-    attitudeErrorLog(:,k+1) = norm(attitudeError);
+    attitudeErrorLog(:,k+1) =attitudeErr;
+
     % attitudeEstimateLog(:,k+1) = norm(attitudeEstimate);
 
-    % GroundTruth
+    % GroundTruth update
     uLog(:,k+1) = u;
     xLog(:,k+1) = x;
-
-
     xNew = fDiscreteRK4(x, u, dt);
     x = xNew;
 
 end
 
-
-plotResults;
 
 %% functions
 
@@ -82,12 +83,15 @@ function xDot = fContinuous(x, u)
     q1 = x(2);
     q2 = x(3);
     q3 = x(4);
+
     wx = x(5);
     wy = x(6);
     wz = x(7);
+
     px = x(8);
     py = x(9);
     pz = x(10);
+
     vx = x(11);
     vy = x(12);
     vz = x(13);
@@ -105,6 +109,13 @@ function xDot = fContinuous(x, u)
     Izz = 1.0e+03 * 5.518363350668759;
     m = 260;
     mu = 3.986004418e14;
+    % Reaction Wheel
+    IwheelZ=0;
+    wWheel=0;
+    % Direction of the Wheel principal axis
+    rx=0;
+    ry=0;
+    rz=0;
 
     xDot = [-0.5000*q1*wx - 0.5000*q2*wy - 0.5000*q3*wz;
              0.5000*q0*wx - 0.5000*q3*wy + 0.5000*q2*wz;
