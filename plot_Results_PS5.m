@@ -161,15 +161,15 @@ end
 % xlabel('Time (s)')
 % legend('q_0', 'q_1', 'q_2', 'q_3')
 % xlim([0,tLog(end)])
-% 
-% figure; grid on; hold on;
-% title("Angular velocities")
-% plot(tLog, wx)
-% plot(tLog, wy)
-% plot(tLog, wz)
-% xlabel('Time (s)')
-% legend('\omega_x', '\omega_y', '\omega_z')
-% xlim([0,tLog(end)])
+
+figure; grid on; hold on;
+title("Angular velocities")
+plot(tLog, wx)
+plot(tLog, wy)
+plot(tLog, wz)
+xlabel('Time (s)')
+legend('\omega_x', '\omega_y', '\omega_z')
+xlim([0,tLog(end)])
 % 
 % figure; grid on; hold on;
 % title("Torque")
@@ -221,8 +221,9 @@ end
 % % xlim([0,tLog(end)])
 
 figure; grid on; hold on;
-title("Euler angles ZYX order")
+title("Error in Euler angles ZYX order")
 plot(tLog, eulerAnglesError)
 xlabel('Time (s)')
+ylabel('Error (rad)')
 legend('\phi', '\theta', '\psi')
 xlim([0,tLog(end)])
