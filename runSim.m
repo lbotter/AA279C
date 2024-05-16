@@ -26,8 +26,8 @@ for k = 0:length(0:dt:tf)
 
     % Attitude estimation
     [attitudeErr,~]=attitudeError(qDesired,x(1:4));
-    attitudeEstimate=deterministicAttitude(M,V);
-    %attitudeEstimateq=qmethod(M,V,measW);
+    [attitudeEstimate,~]=deterministicAttitude(M,V);
+    %[attitudeEstimate,~]=qmethod(M,V,measW);
 
 
     % Total torque acting on the satellite
@@ -43,7 +43,7 @@ for k = 0:length(0:dt:tf)
     % Onboard Estimate
     attitudeErrorLog(:,k+1) =attitudeErr;
 
-    % attitudeEstimateLog(:,k+1) = norm(attitudeEstimate);
+    attitudeEstimateLog(:,k+1) = attitudeEstimate;
 
     % GroundTruth update
     uLog(:,k+1) = u;

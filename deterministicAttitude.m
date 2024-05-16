@@ -1,4 +1,4 @@
-function [A] = deterministicAttitude(M,V)
+function [q,A] = deterministicAttitude(M,V)
 %DETERMINISTIC_ATTITUDE Function that uses a determinitstic attitude
 %approach to find the attitude matrix
 % INPUT: M: measurement matrix 3xn in principal frame
@@ -25,6 +25,10 @@ elseif size(M,2)==2
 end
 
 A=M*V'*inv(V*V');
+q=dcm2quat(A);
+if q(1)<0
+    q=q*(-1);
+end
 
 
 

@@ -43,7 +43,7 @@ T = sqrt((4 * pi^2 * p0(1)^3) / (mu));
 dt = T/100000;
 
 % Final time
-tf = 0.5*T;  
+tf = 0.3*T;  
 
 
 % 3D geometry

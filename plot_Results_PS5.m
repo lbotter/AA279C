@@ -6,6 +6,8 @@ q0 = true(1,:);
 q1 = true(2,:);
 q2 = true(3,:);
 q3 = true(4,:);
+
+
 wx = true(5,:);
 wy = true(6,:);
 wz = true(7,:);
@@ -92,7 +94,6 @@ for i=1:length(q0)
     eulerAnglesError(:,i)= quat2eul([attitudeErrorLog(1,i),attitudeErrorLog(2,i),attitudeErrorLog(3,i),attitudeErrorLog(4,i)], 'ZYX');
     T(i)=0.5*[wx(i); wy(i); wz(i)]'*I*[wx(i); wy(i); wz(i)]+ 0.5*IwheelZ*wWheel^2;
     w(i,:)=R_P2C*[wx(i);wy(i);wz(i)];
-
 end
 
 % figure; grid on; hold on;
@@ -152,15 +153,23 @@ end
 % % legend('LVLH X','LVLH Y','LVLH Z')
 % % linkaxes
 % 
-% figure; grid on; hold on;
-% title("Quaternion Parameters")
-% plot(tLog, q0)
-% plot(tLog, q1)
-% plot(tLog, q2)
-% plot(tLog, q3)
-% xlabel('Time (s)')
-% legend('q_0', 'q_1', 'q_2', 'q_3')
-% xlim([0,tLog(end)])
+figure; grid on; hold on;
+title("Quaternion Parameters Real")
+plot(tLog, q0)
+plot(tLog, q1)
+plot(tLog, q2)
+plot(tLog, q3)
+xlabel('Time (s)')
+legend('q_0', 'q_1', 'q_2', 'q_3')
+xlim([0,tLog(end)])
+
+
+figure; grid on; hold on;
+title("Quaternion Parameters Estimate")
+plot(tLog, attitudeEstimateLog);
+xlabel('Time (s)')
+legend('q_0', 'q_1', 'q_2', 'q_3')
+xlim([0,tLog(end)])
 
 figure; grid on; hold on;
 title("Angular velocities")
