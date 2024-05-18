@@ -1,11 +1,12 @@
-function [meas] = addNoise(variable,noise)
+function [meas] = addNoise(truth,sensor)
 %SENSOR_MEASUREMENT Function to simulate the measurement from a sensor
-%   INPUT: variable = ground truth
-%          noise = measurement noise
-%   OUTPUT: meas = simulated measure
+%   INPUT: truth = ground truth [3x1]
+%          stDev = standard deviation for gaussian noise
+%   OUTPUT: meas = simulated measure [3x1]
 
- amplitude = noise.* variable;
- meas = variable + amplitude .* rand(size(variable));
-
+ if isrow(truth)
+     truth=truth';
+ end
+ meas = truth + sensor.bias + normrnd(0,sensor.stDev,3, 1);
 end
 

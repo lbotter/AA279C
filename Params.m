@@ -15,6 +15,7 @@ I_body=[5294.7835 -14.370084 -19.292192;
        -19.292192 -73.354553 231.33503];
 % Inertia tensor in principal frame
 [R_P2B,I_principal]=eig(I_body);
+
 Ixx=I_principal(1,1);
 Iyy=I_principal(2,2);
 Izz=I_principal(3,3);
@@ -49,6 +50,7 @@ tf = 0.3*T;
 % 3D geometry
 geometryBodyFrame = readmatrix('barycenter.xlsx');
 geometryPrincipalFrame = zeros(size(geometryBodyFrame));
+
 % process geometry into principal frame
 for i = 1:size(geometryBodyFrame, 1)
     currRow = geometryBodyFrame(i,:);
@@ -79,6 +81,7 @@ v0 = principal2Inertial(q0).' * v0Inertial;
 
 % Building the vector to propagate
 x = [q0; w0; p0; vi];
+
 % Initializing variables to store
 uLog = zeros(6,(ceil(tf/dt))+2);
 xLog = zeros(length(x),(ceil(tf/dt))+2);

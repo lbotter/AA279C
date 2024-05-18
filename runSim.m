@@ -4,30 +4,21 @@
 for k = 0:length(0:dt:tf)
     currentTime = tLog(k+1);
     R_P2I = principal2Inertial(x(1:4));
-    % Velocity in inertial frame from principal
-    vInertial = R_P2I*[x(11); x(12); x(13)];
-    [R,T,N] = inertial2RTN(x(8),x(9),x(10),vInertial);
-    % ASK albert
-    R_P2I = inv(R_P2I);
-    R = R_P2I*R;
-    T = R_P2I*T;
-    N = R_P2I*N;
-
-    [V,M,measW]=generateMeasurementMatrix(x,currentTime,0);
+    [V,M,measW]=generateMeasurementMatrix(x,currentTime,R_P2I);
 
     % Determine the desired attitude
     qDesired=desiredAttitude(pointingPrincipal,x(8:10)',x(1:4)');
 
     % u: input, [tx; ty; tz; fx; fy; fz]
-    gravityGradientTorque = gravityGradient(I_principal, R, norm([x(8); x(9); x(10)]));
+    gravityGradientTorque = gravityGradient(I_principal,x,R_P2I);
     magneticTorque = magneticTorques(x, currentTime);
     solarTorque = solarTorques(x, geometryPrincipalFrame);
     aeroTorque = aeroTorques(x, geometryPrincipalFrame);
 
     % Attitude estimation
-    [attitudeErr,~]=attitudeError(qDesired,x(1:4));
-    [attitudeEstimate,~]=deterministicAttitude(M,V);
-    %[attitudeEstimate,~]=qmethod(M,V,measW);
+    [attitudeEstimateDet,~]=deterministicAttitude(M,V);
+    %[attitudeEstimateStat,~]=qmethod(M,V,measW);
+    [attitudeErr,~]=attitudeError(attitudeEstimateDet,x(1:4));
 
 
     % Total torque acting on the satellite
@@ -43,7 +34,7 @@ for k = 0:length(0:dt:tf)
     % Onboard Estimate
     attitudeErrorLog(:,k+1) =attitudeErr;
 
-    attitudeEstimateLog(:,k+1) = attitudeEstimate;
+    attitudeEstimateLog(:,k+1) = attitudeEstimateDet;
 
     % GroundTruth update
     uLog(:,k+1) = u;

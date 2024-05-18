@@ -4,17 +4,9 @@ for k = 0:length(0:dt:tf)
     % Propagate to the next step
     % Compute the rotation matrix
     R_P2I=principal_to_inertia(x(1:4));
-    % Velocity in inertial frame from principal
-    v_inertia= R_P2I*[x(11); x(12); x(13)];
-     
-    [R,T,N]=LVL_frame(x(8),x(9),x(10),v_inertia);
-    R_P2I=inv(R_P2I);
-    R=R_P2I*R;
-    T=R_P2I*T;
-    N=R_P2I*N;
     
     % Uncomment for gravity gradient
-    u(1:3)=GravityGradient(I_principal,R,norm([x(8);x(9);x(10)]));
+    u(1:3)=GravityGradient(x,I_principal,R,norm([x(8);x(9);x(10)]));
     xNew = fDiscreteRK4(x, u, dt);
 
     uLog(:,k+1) = u;
