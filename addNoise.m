@@ -8,5 +8,7 @@ function [meas] = addNoise(truth,sensor)
      truth=truth';
  end
  meas = truth + sensor.bias + normrnd(0,sensor.stDev,3, 1);
+ meas=meas/norm(meas);
+
 end
 

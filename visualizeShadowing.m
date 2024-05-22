@@ -1,5 +1,3 @@
-close all; clc; clear all;
-
 figure; grid on; hold on;
 globeRadius = 6371000;
 [X,Y,Z] = sphere;

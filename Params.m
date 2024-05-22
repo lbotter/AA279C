@@ -95,5 +95,7 @@ aeroTorqueLog = zeros(3,(ceil(tf/dt))+2);
 % Onboard Estimate in quaternion
 attitudeErrorLog = zeros(4,(ceil(tf/dt))+2);
 attitudeEstimateLog = zeros(4,(ceil(tf/dt))+2);
+sunVectorLog=zeros(3,(ceil(tf/dt))+2);
+magVectorLog=zeros(3,(ceil(tf/dt))+2);
 
 u = [0; 0; 0; 0; 0; 0];

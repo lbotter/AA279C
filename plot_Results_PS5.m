@@ -1,3 +1,4 @@
+close all
 true = xLog;
 
 % [q0, q1, q2, q3, wx, wy, wz, px, py, pz, vx, vy, vz]
@@ -128,14 +129,17 @@ end
 % axis equal
 % legend("Herpolhode", "Angular Momentum Vector")
 % % 
-% % figure;
-% % subplot(3,1,1); grid on; hold on;
-% % sc = 10;
-% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), principalX(1,1:sc:end), principalX(2,1:sc:end), principalX(3,1:sc:end));
-% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), principalY(1,1:sc:end), principalY(2,1:sc:end), principalY(3,1:sc:end));
-% % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), principalZ(1,1:sc:end), principalZ(2,1:sc:end), principalZ(3,1:sc:end));
-% % axis equal
-% % legend('Principal X','Principal Y','Principal Z')
+figure;
+grid on; hold on;
+sc = 100;
+quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), sunVectorLog(1,1:sc:end), sunVectorLog(2,1:sc:end), sunVectorLog(3,1:sc:end));
+quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), magVectorLog(1,1:sc:end), magVectorLog(2,1:sc:end), magVectorLog(3,1:sc:end));
+axis equal
+legend('Sun Measure','Mag Measure')
+title('Pointing in Principal frame');
+xlabel('t (s)')
+
+
 % % 
 % % subplot(3,1,2); grid on; hold on;
 % % quiver3(tLog(1:sc:end), zeros(1,length(tLog(1:sc:end))), zeros(1,length(tLog(1:sc:end))), bodyX(1,1:sc:end), bodyX(2,1:sc:end), bodyX(3,1:sc:end));
@@ -180,15 +184,15 @@ xlabel('Time (s)')
 legend('\omega_x', '\omega_y', '\omega_z')
 xlim([0,tLog(end)])
 % 
-% figure; grid on; hold on;
-% title("Torque")
-% plot(tLog, ux)
-% plot(tLog, uy)
-% plot(tLog, uz)
-% xlabel('Time (s)')
-% legend('M_x', 'M_y', 'M_z')
-% xlim([0,tLog(end)])
-% ylim([-0.1 0.1])
+figure; grid on; hold on;
+title("Torque")
+plot(tLog, ux)
+plot(tLog, uy)
+plot(tLog, uz)
+xlabel('Time (s)')
+legend('M_x', 'M_y', 'M_z')
+xlim([0,tLog(end)])
+ylim([-0.1 0.1])
 % 
 % figure; grid on; hold on;
 % title("Euler angles ZYX order")
@@ -229,6 +233,7 @@ xlim([0,tLog(end)])
 % % ylabel("Angular Momentum (kgm^2/s)")
 % % xlim([0,tLog(end)])
 
+% Plot Euler angles
 figure; grid on; hold on;
 title("Error in Euler angles ZYX order")
 plot(tLog, eulerAnglesError)
@@ -236,3 +241,28 @@ xlabel('Time (s)')
 ylabel('Error (rad)')
 legend('\phi', '\theta', '\psi')
 xlim([0,tLog(end)])
+
+
+% Plot orbit
+matrix =[px',py',pz'];
+figure; grid on; hold on;
+title("Distance")
+plot3(px,py,pz)
+
+
+% Plot quaternions and estimate overlapped
+figure; grid on; hold on;
+title("Quaternion Parameters Overlap")
+plot(tLog, q0)
+hold on
+plot(tLog, q1)
+hold on
+plot(tLog, q2)
+hold on
+plot(tLog, q3)
+hold on
+plot(tLog, attitudeEstimateLog);
+xlabel('Time (s)')
+legend('q_0r', 'q_1r', 'q_2r', 'q_3r','q_0r', 'q_1', 'q_2', 'q_3')
+xlim([0,tLog(end)])
+
