@@ -18,6 +18,7 @@ q_d=q_d/norm(q_d);
 q_a=q_a/norm(q_a);
 
 q_e=quatmultiply(quatconj(q_d), q_a);
+q_e=q_e/norm(q_e);
 DCM=quat2dcm(q_e);
 
 end

@@ -3,7 +3,8 @@ close all;
 clc;
 clear;
 % Load the parameters
-Params
+Parameters;
+sensorsDefinition;
 % runn the simulation
 runSim;
 %

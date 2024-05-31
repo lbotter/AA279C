@@ -5,17 +5,20 @@
 %          w        : weight to add to the measurement
 
 % SUNSENSOR
-sunSensor.bias = 0;
-sunSensor.stDev = deg2rad(0.3);
-sunSensor.w = 1;
+sunSensor.bias=[0.0003;0.0002;0];
+sunSensor.bias1=0;
+sunSensor.stDev=deg2rad(0.3);
+sunSensor.w=1;
 
 % MAGNETOMETER
-magSensor.bias = 12e-12;
-magSensor.stDev = 5e-9;
-magSensor.w = 1;
+magSensor.bias=[0;0;0];
+magSensor.bias1=12e-12;
+magSensor.stDev=5e-9;
+magSensor.w=1;
 
 % GYROSCOPE
-gyroSensor.bias = deg2rad(0.05);
-gyroSensor.stDev = deg2rad(0.03);
-gyroSensor.w = 1;
+gyroSensor.bias=0*[1,1,1]*1e-6;
+gyroSensor.stDev=deg2rad(0.3);
+gyroSensor.bias1=deg2rad(0.5);
+gyroSensor.w=1;
 
