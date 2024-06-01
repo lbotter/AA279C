@@ -177,10 +177,10 @@ for i=1:length(q0)
     q2c = q2(i);
     q3c = q3(i);
 
-    eulerPhiThetaPsi(:,i) = quat2angle([q0(i); q1(i); q2(i); q3(i)]');
-    eulerPhiThetaPsiEst(:,i) = quat2angle([q0Est(i); q1Est(i); q2Est(i); q3Est(i)]');
+    eulerPhiThetaPsi(:,i) = quat2Eul([q0(i); q1(i); q2(i); q3(i)]');
+    eulerPhiThetaPsiEst(:,i) = quat2Eul([q0Est(i); q1Est(i); q2Est(i); q3Est(i)]');
     eulerAngleError(:,i) = abs( eulerPhiThetaPsi(:,i) - eulerPhiThetaPsiEst(:,i) );
-    varianceEul(:,i)=quat2angle(varianceLog(1:4,i)');
+    varianceEul(:,i)=quat2Eul(varianceLog(1:4,i)');
 
 
 
@@ -336,7 +336,7 @@ std_error=std(rad2deg(quaternionError(:,index)),0,2)
 %%
 
 % Euler angles
-stEul=10*sqrt(rad2deg(sqrt(varianceEul)));
+stEul=rad2deg(sqrt(varianceEul));
 
 % mean euler angle error
 clear mean

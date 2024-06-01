@@ -210,16 +210,16 @@ function [xNew, y] = fDiscreteRK4(x, u, t, dt)
     
     % add bias and variance
     sensorsDefinition;
-    % y = g;
-    y = [addNoise(g(1), gyroSensor);
-         addNoise(g(2), gyroSensor);
-         addNoise(g(3), gyroSensor);
-         addNoise(g(4), sunSensor);
-         addNoise(g(5), sunSensor);
-         addNoise(g(6), sunSensor);
-         addNoise(g(7), magSensor);
-         addNoise(g(8), magSensor);
-         addNoise(g(9), magSensor)];
+    y = g;
+    % y = [addNoise(g(1), gyroSensor);
+    %      addNoise(g(2), gyroSensor);
+    %      addNoise(g(3), gyroSensor);
+    %      addNoise(g(4), sunSensor);
+    %      addNoise(g(5), sunSensor);
+    %      addNoise(g(6), sunSensor);
+    %      addNoise(g(7), magSensor);
+    %      addNoise(g(8), magSensor);
+    %      addNoise(g(9), magSensor)];
 end
 
 %%
