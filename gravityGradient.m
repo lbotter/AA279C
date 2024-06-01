@@ -1,9 +1,11 @@
-function [M] = gravityGradient(I_principal,x,R_P2I)
+function [M] = gravityGradient(I_principal,x)
 % Function to compute the gravity gradient momentum
 % INPUT: I_principal axis
-%        R: [cx,cy,cx] Position in RTN normalized
+%        x : state vector
 %        Rnorm: radius length (orbit radius)
 % OUTPUT: Mx,My,Mz in principal axis to feed to Euler Equations
+
+R_P2I = principal2Inertial(x(1:4));
 mu = 3.98600e14;
 % Velocity in inertial frame from principal
 vInertial = R_P2I*[x(11); x(12); x(13)];

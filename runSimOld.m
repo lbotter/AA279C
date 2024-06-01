@@ -1,66 +1,140 @@
 %% Run Simulation
-clear all;
-clc;
-close all;
 
-% Define all the attitude and orbital parameters
-params;
-
-% Define all the sensor errors and biases
-sensorsDefinition;
-
-% Time loop
+% Main loop
 for k = 0:length(0:dt:tf)
     currentTime = tLog(k+1);
+    % Does not preserve magnitude
+    R_P2I = principal2Inertial(x(1:4));
+    [V,M,measW]=generateMeasurementMatrix(x,currentTime,R_P2I);
 
-    % Computing external disturbancies 
-    gravityGradientTorque = gravityGradient(I_principal, x);
+    % Determine the desired attitude
+    qDesired=desiredAttitude(pointingPrincipal,x(8:10)',x(1:4)');
+
+    % u: input, [tx; ty; tz; fx; fy; fz]
+    gravityGradientTorque = gravityGradient(I_principal,x,R_P2I);
     magneticTorque = magneticTorques(x, currentTime);
     solarTorque = solarTorques(x, geometryPrincipalFrame);
-    aeroTorque = aeroTorques(x, geometryPrincipalFrame);  
-    
-    % u: external input, [tx; ty; tz; fx; fy; fz]
+    aeroTorque = aeroTorques(x, geometryPrincipalFrame);
+
+    % Attitude estimation
+
+    [attitudeEstimateDet,~]=deterministicAttitude(M,V);
+    %attitudeEstimateDet=quaternionSign(x(1:4),attitudeEstimateDet);
+    [attitudeEstimateStat,~]=qmethod(M,V,measW);
+    %attitudeEstimateStat=quaternionSign(x(1:4),attitudeEstimateStat);
+    [attitudeErr,~]=attitudeError(attitudeEstimateDet,x(1:4));
+
+
+    % Total torque acting on the satellite
     u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque;
-    % Update the ground truth
+
+
+    % Update the log
+    gravityTorqueLog(:,k+1) = norm(gravityGradientTorque);
+    magneticTorqueLog(:,k+1) = norm(magneticTorque);
+    solarTorqueLog(:,k+1) = norm(solarTorque);
+    aeroTorqueLog(:,k+1) = norm(aeroTorque);
+
+    % Onboard Estimate
+    attitudeErrorLog(:,k+1) =attitudeErr;
+    sunVectorLog(:,k+1)=M(:,1);
+    magVectorLog(:,k+1)=M(:,2);
+    attitudeEstimateLog(:,k+1) = attitudeEstimateDet;
+
+
+    % EKF Attitude estimation
     [xNew, y] = fDiscreteRK4(x, u, currentTime, dt);
-    % Applying the EKF
-    [meanPredict, covPredict, meanNew, covNew,prefit,postfit] = EKF(x, u, y, meancomp, cov, Q, R, dt, currentTime);
+    [meanPredict, covPredict, meanNew, covNew] = EKF(x, u, y, mean, cov, Q, R, dt, currentTime);
 
-    % Update the variables in the loop
-    x = xNew;
-    meancomp = meanNew;
-    cov = covNew;
 
-    % Variable storage
+    % Store the results
     uLog(:,k+1) = u;
     xLog(:,k+1) = x;
-    yLog(:,k+1) = y;
-    meanLog(:,k+1) = meancomp;
-    meanPredictLog(:,k+1) = meanPredict;
-    varianceLog(:,k+1) = [cov(1,1), cov(2,2), cov(3,3), cov(4,4), cov(5,5), cov(6,6), cov(7,7)];
-    preFitLog(:,k+1)=prefit;
-    postFitLog(:,k+1)=postfit;
-    gravityTorqueMagLog(:,k+1) = norm(gravityGradientTorque);
-    magneticTorqueMagLog(:,k+1) = norm(magneticTorque);
-    solarTorqueMagLog(:,k+1) = norm(solarTorque);
-    aeroTorqueMagLog(:,k+1) = norm(aeroTorque);
-    gravityTorqueLog(:,k+1) = gravityGradientTorque;
-    magneticTorqueLog(:,k+1) = magneticTorque;
-    solarTorqueLog(:,k+1) = solarTorque;
-    aeroTorqueLog(:,k+1) = aeroTorque;
+    ylog(:,k+1) = y;
+
+
+    mean = meanNew;
+    cov = covNew;
+    x=xNew;
+
+
 
 end
 
-errorAnalysis;
+
 %% functions
 
-function [meanPredict, covPredict, meanUpdate, covUpdate,prefit,postfit] = EKF(x, u, y, mean, cov, Q, R, dt, t)
+
+function xDot = fContinuous(x, u)
+    % Returns the nonlinear continuous-time derivative, x_dot = f(x, u)
+    
+    % Inputs:
+    % x: state, [q0; q1; q2; q3; wx; wy; wz; px; py; pz; vx; vy; vz]
+    % u: input, [tx; ty; tz; fx; fy; fz]
+    
+    % Outputs:
+    % xDot
+
+    q0 = x(1);
+    q1 = x(2);
+    q2 = x(3);
+    q3 = x(4);
+
+    wx = x(5);
+    wy = x(6);
+    wz = x(7);
+
+    px = x(8);
+    py = x(9);
+    pz = x(10);
+
+    vx = x(11);
+    vy = x(12);
+    vz = x(13);
+
+    tx = u(1);
+    ty = u(2);
+    tz = u(3);
+    fx = u(4);
+    fy = u(5);
+    fz = u(6);
+
+    % parameters
+    Ixx = 1.0e+03 * 0.230242103134935;
+    Iyy = 1.0e+03 * 5.293968876196306;
+    Izz = 1.0e+03 * 5.518363350668759;
+    m = 260;
+    mu = 3.986004418e14;
+    % Reaction Wheel
+    IwheelZ=0;
+    wWheel=0;
+    % Direction of the Wheel principal axis
+    rx=0;
+    ry=0;
+    rz=0;
+
+    xDot = [-0.5000*q1*wx - 0.5000*q2*wy - 0.5000*q3*wz;
+             0.5000*q0*wx - 0.5000*q3*wy + 0.5000*q2*wz;
+             0.5000*q3*wx + 0.5000*q0*wy - 0.5000*q1*wz;
+             0.5000*q1*wy - 0.5000*q2*wx + 0.5000*q0*wz;
+           (tx - (Izz-Iyy)*wy*wz+IwheelZ*wWheel*(wy*rz-wz*ry))/Ixx;
+           (ty - (Ixx-Izz)*wz*wx+IwheelZ*wWheel*(wz*rx-wx*rz))/Iyy;
+           (tz - (Iyy-Ixx)*wx*wy+IwheelZ*wWheel*(wx*ry-wy*rx))/Izz;
+             vx*(q0^2 + q1^2 - q2^2 - q3^2) - vy*(2*q0*q3 - 2*q1*q2) + vz*(2*q0*q2 + 2*q1*q3);
+             vy*(q0^2 - q1^2 + q2^2 - q3^2) + vx*(2*q0*q3 + 2*q1*q2) - vz*(2*q0*q1 - 2*q2*q3);
+             vz*(q0^2 - q1^2 - q2^2 + q3^2) - vx*(2*q0*q2 - 2*q1*q3) + vy*(2*q0*q1 + 2*q2*q3);
+            (fx + m*vy*wz - m*vz*wy - (m*mu*px*(q0^2 + q1^2 - q2^2 - q3^2))/(px^2 + py^2 + pz^2)^1.5 - (m*mu*py*(2*q0*q3 + 2*q1*q2))/(px^2 + py^2 + pz^2)^1.5 + (m*mu*pz*(2*q0*q2 - 2*q1*q3))/(px^2 + py^2 + pz^2)^1.5)/m;
+            (fy - m*vx*wz + m*vz*wx - (m*mu*py*(q0^2 - q1^2 + q2^2 - q3^2))/(px^2 + py^2 + pz^2)^1.5 + (m*mu*px*(2*q0*q3 - 2*q1*q2))/(px^2 + py^2 + pz^2)^1.5 - (m*mu*pz*(2*q0*q1 + 2*q2*q3))/(px^2 + py^2 + pz^2)^1.5)/m;
+            (fz + m*vx*wy - m*vy*wx - (m*mu*pz*(q0^2 - q1^2 - q2^2 + q3^2))/(px^2 + py^2 + pz^2)^1.5 - (m*mu*px*(2*q0*q2 + 2*q1*q3))/(px^2 + py^2 + pz^2)^1.5 + (m*mu*py*(2*q0*q1 - 2*q2*q3))/(px^2 + py^2 + pz^2)^1.5)/m];
+
+end
+
+function [meanPredict, covPredict, meanUpdate, covUpdate] = EKF(x, u, y, mean, cov, Q, R, dt, t)
     
     q0 = mean(1);
     q1 = mean(2);
     q2 = mean(3);
     q3 = mean(4);
-
     wx = mean(5);
     wy = mean(6);
     wz = mean(7);
@@ -140,24 +214,10 @@ function [meanPredict, covPredict, meanUpdate, covUpdate,prefit,postfit] = EKF(x
     % g(isnan(g))=0;
     % C(isnan(C))=0;
 
-    prefit=y-g;
-
     meanUpdate = meanPredict + covPredict*(C')/(C*covPredict*C' + R)*(y - g);
     covUpdate = covPredict - covPredict*(C')/(C*covPredict*C' + R)*C*covPredict;
 
     meanUpdate(1:4) = meanUpdate(1:4)./norm(meanUpdate(1:4)); % normalize quaternion
-
-    q0 = meanUpdate(1);
-    q1 = meanUpdate(2);
-    q2 = meanUpdate(3);
-    q3 = meanUpdate(4);
-    wx = meanUpdate(5);
-    wy = meanUpdate(6);
-    wz = meanUpdate(7);
-
-    findG;
-    
-    postfit=y-g;
     
 end
 
@@ -220,60 +280,4 @@ function [xNew, y] = fDiscreteRK4(x, u, t, dt)
          addNoise(g(7), magSensor);
          addNoise(g(8), magSensor);
          addNoise(g(9), magSensor)];
-end
-
-%%
-
-function xDot = fContinuous(x, u)
-    % Returns the nonlinear continuous-time derivative, x_dot = f(x, u)
-    
-    % Inputs:
-    % x: state, [q0; q1; q2; q3; wx; wy; wz; px; py; pz; vx; vy; vz]
-    % u: input, [tx; ty; tz; fx; fy; fz]
-    
-    % Outputs:
-    % xDot
-
-    q0 = x(1);
-    q1 = x(2);
-    q2 = x(3);
-    q3 = x(4);
-    wx = x(5);
-    wy = x(6);
-    wz = x(7);
-    px = x(8);
-    py = x(9);
-    pz = x(10);
-    vx = x(11);
-    vy = x(12);
-    vz = x(13);
-
-    tx = u(1);
-    ty = u(2);
-    tz = u(3);
-    fx = u(4);
-    fy = u(5);
-    fz = u(6);
-
-    % parameters
-    Ixx = 1.0e+03 * 0.230242103134935;
-    Iyy = 1.0e+03 * 5.293968876196306;
-    Izz = 1.0e+03 * 5.518363350668759;
-    m = 260;
-    mu = 3.986004418e14;
-
-    xDot = [-0.5000*q1*wx - 0.5000*q2*wy - 0.5000*q3*wz;
-             0.5000*q0*wx - 0.5000*q3*wy + 0.5000*q2*wz;
-             0.5000*q3*wx + 0.5000*q0*wy - 0.5000*q1*wz;
-             0.5000*q1*wy - 0.5000*q2*wx + 0.5000*q0*wz;
-            (tx + Iyy*wy*wz - Izz*wy*wz)/Ixx;
-            (ty - Ixx*wx*wz + Izz*wx*wz)/Iyy;
-            (tz + Ixx*wx*wy - Iyy*wx*wy)/Izz;
-             vx*(q0^2 + q1^2 - q2^2 - q3^2) - vy*(2*q0*q3 - 2*q1*q2) + vz*(2*q0*q2 + 2*q1*q3);
-             vy*(q0^2 - q1^2 + q2^2 - q3^2) + vx*(2*q0*q3 + 2*q1*q2) - vz*(2*q0*q1 - 2*q2*q3);
-             vz*(q0^2 - q1^2 - q2^2 + q3^2) - vx*(2*q0*q2 - 2*q1*q3) + vy*(2*q0*q1 + 2*q2*q3);
-            (fx + m*vy*wz - m*vz*wy - (m*mu*px*(q0^2 + q1^2 - q2^2 - q3^2))/(px^2 + py^2 + pz^2)^1.5 - (m*mu*py*(2*q0*q3 + 2*q1*q2))/(px^2 + py^2 + pz^2)^1.5 + (m*mu*pz*(2*q0*q2 - 2*q1*q3))/(px^2 + py^2 + pz^2)^1.5)/m;
-            (fy - m*vx*wz + m*vz*wx - (m*mu*py*(q0^2 - q1^2 + q2^2 - q3^2))/(px^2 + py^2 + pz^2)^1.5 + (m*mu*px*(2*q0*q3 - 2*q1*q2))/(px^2 + py^2 + pz^2)^1.5 - (m*mu*pz*(2*q0*q1 + 2*q2*q3))/(px^2 + py^2 + pz^2)^1.5)/m;
-            (fz + m*vx*wy - m*vy*wx - (m*mu*pz*(q0^2 - q1^2 - q2^2 + q3^2))/(px^2 + py^2 + pz^2)^1.5 - (m*mu*px*(2*q0*q2 + 2*q1*q3))/(px^2 + py^2 + pz^2)^1.5 + (m*mu*py*(2*q0*q1 - 2*q2*q3))/(px^2 + py^2 + pz^2)^1.5)/m];
-
 end
