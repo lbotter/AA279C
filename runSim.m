@@ -20,11 +20,28 @@ for k = 0:length(0:dt:tf)
     aeroTorque = aeroTorques(x, geometryPrincipalFrame);  
     
     % u: external input, [tx; ty; tz; fx; fy; fz]
-    u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque;
+    u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque+deltaU;
+    u(1:3) = deltaU;
+
     % Update the ground truth
     [xNew, y] = fDiscreteRK4(x, u, currentTime, dt);
+
     % Applying the EKF
     [meanPredict, covPredict, meanNew, covNew,prefit,postfit] = EKF(x, u, y, meancomp, cov, Q, R, dt, currentTime);
+
+    % Computing the desired attitude
+    qDes=desiredAttitude(earthPointingVec, trackPointingVec,-xNew(8:10),principal2Inertial(xNew(1:4))*xNew(11:13));
+    deltaULarge=controlLinear(meanNew(1:4),qDes,meanNew(5:7),responseF);
+    deltaU=controlLarge(meanNew(1:4),qDes,meanNew(5:7),responseF);
+
+
+    % figure(1)
+    % plot(currentTime,deltaU,'ob');
+    % hold on
+    % plot(currentTime,deltaULarge,'+r');
+    % pause(0.2)
+    % hold on
+
 
     % Update the variables in the loop
     x = xNew;
@@ -35,6 +52,7 @@ for k = 0:length(0:dt:tf)
     uLog(:,k+1) = u;
     xLog(:,k+1) = x;
     yLog(:,k+1) = y;
+
     meanLog(:,k+1) = meancomp;
     meanPredictLog(:,k+1) = meanPredict;
     varianceLog(:,k+1) = [cov(1,1), cov(2,2), cov(3,3), cov(4,4), cov(5,5), cov(6,6), cov(7,7)];
@@ -48,43 +66,22 @@ for k = 0:length(0:dt:tf)
     magneticTorqueLog(:,k+1) = magneticTorque;
     solarTorqueLog(:,k+1) = solarTorque;
     aeroTorqueLog(:,k+1) = aeroTorque;
+    deltaULog(:,k+1) = deltaU;
+    desiredAttitudeLog(:,k+1)=qDes;
 
 end
 
-errorAnalysis;
+controlAnalysis;
 %% functions
 
-function [meanPredict, covPredict, meanUpdate, covUpdate,prefit,postfit] = EKF(x, u, y, mean, cov, Q, R, dt, t)
+function [meanPredict, covPredict, meanUpdate, covUpdate,prefit,postfit] = EKF(x, u, y, meancomp, cov, Q, R, dt, t)
     
-    q0 = mean(1);
-    q1 = mean(2);
-    q2 = mean(3);
-    q3 = mean(4);
 
-    wx = mean(5);
-    wy = mean(6);
-    wz = mean(7);
+    [q0, q1, q2, q3, wx, wy, wz] = deal(meancomp(1), meancomp(2), meancomp(3), meancomp(4), meancomp(5), meancomp(6), meancomp(7));
+    [px, py, pz, vx, vy, vz] = deal(x(8), x(9), x(10), x(11), x(12), x(13));
+    [tx, ty, tz, fx, fy, fz] = deal(u(1), u(2), u(3), u(4), u(5), u(6));
 
-    px = x(8);
-    py = x(9);
-    pz = x(10);
-    vx = x(11);
-    vy = x(12);
-    vz = x(13);
-
-    tx = u(1);
-    ty = u(2);
-    tz = u(3);
-    fx = u(4);
-    fy = u(5);
-    fz = u(6);
-
-    % parameters
-    Ixx = 1.0e+03 * 0.230242103134935;
-    Iyy = 1.0e+03 * 5.293968876196306;
-    Izz = 1.0e+03 * 5.518363350668759;
-    m = 260;
-    mu = 3.986004418e14;
+    geometryDefinition;
     
     A = [1, -0.5*dt*wx, -0.5*dt*wy, -0.5*dt*wz,   -0.5*dt*q1,  -0.5*dt*q2,   -0.5*dt*q3;
          0.5*dt*wx, 1,  0.5*dt*wz, -0.5*dt*wy,    0.5*dt*q0,  -0.5*dt*q3,    0.5*dt*q2;
@@ -109,13 +106,7 @@ function [meanPredict, covPredict, meanUpdate, covUpdate,prefit,postfit] = EKF(x
     covPredict = A*cov*A' + Q;
 
     % update --------------------------------------------------------------
-    q0 = meanPredict(1);
-    q1 = meanPredict(2);
-    q2 = meanPredict(3);
-    q3 = meanPredict(4);
-    wx = meanPredict(5);
-    wy = meanPredict(6);
-    wz = meanPredict(7);
+    [q0, q1, q2, q3, wx, wy, wz] = deal(meanPredict(1), meanPredict(2), meanPredict(3), meanPredict(4), meanPredict(5), meanPredict(6), meanPredict(7));
 
     g = [wx;    % gyro
          wy;
@@ -147,13 +138,7 @@ function [meanPredict, covPredict, meanUpdate, covUpdate,prefit,postfit] = EKF(x
 
     meanUpdate(1:4) = meanUpdate(1:4)./norm(meanUpdate(1:4)); % normalize quaternion
 
-    q0 = meanUpdate(1);
-    q1 = meanUpdate(2);
-    q2 = meanUpdate(3);
-    q3 = meanUpdate(4);
-    wx = meanUpdate(5);
-    wy = meanUpdate(6);
-    wz = meanUpdate(7);
+    [q0, q1, q2, q3, wx, wy, wz] = deal(meanUpdate(1), meanUpdate(2), meanUpdate(3), meanUpdate(4), meanUpdate(5), meanUpdate(6), meanUpdate(7));
 
     findG;
     
@@ -182,19 +167,7 @@ function [xNew, y] = fDiscreteRK4(x, u, t, dt)
     xNew(1:4) = xNew(1:4)./norm(xNew(1:4)); % normalize quaternion
 
     % measurement equations
-    q0 = xNew(1);
-    q1 = xNew(2);
-    q2 = xNew(3);
-    q3 = xNew(4);
-    wx = xNew(5);
-    wy = xNew(6);
-    wz = xNew(7);
-    px = xNew(8);
-    py = xNew(9);
-    pz = xNew(10);
-    vx = xNew(11);
-    vy = xNew(12);
-    vz = xNew(13);
+    [q0, q1, q2, q3, wx, wy, wz, px, py, pz, vx, vy, vz] = deal(xNew(1), xNew(2), xNew(3), xNew(4), xNew(5), xNew(6), xNew(7), xNew(8), xNew(9), xNew(10), xNew(11), xNew(12), xNew(13));
 
     g = [wx;    % gyro
          wy;
@@ -211,15 +184,16 @@ function [xNew, y] = fDiscreteRK4(x, u, t, dt)
     % add bias and variance
     sensorsDefinition;
     y = g;
-    % y = [addNoise(g(1), gyroSensor);
-    %      addNoise(g(2), gyroSensor);
-    %      addNoise(g(3), gyroSensor);
-    %      addNoise(g(4), sunSensor);
-    %      addNoise(g(5), sunSensor);
-    %      addNoise(g(6), sunSensor);
-    %      addNoise(g(7), magSensor);
-    %      addNoise(g(8), magSensor);
-    %      addNoise(g(9), magSensor)];
+    y = [addNoise(g(1), gyroSensor);
+         addNoise(g(2), gyroSensor);
+         addNoise(g(3), gyroSensor);
+         addNoise(g(4), sunSensor);
+         addNoise(g(5), sunSensor);
+         addNoise(g(6), sunSensor);
+         addNoise(g(7), magSensor);
+         addNoise(g(8), magSensor);
+         addNoise(g(9), magSensor)];
+    y = g;
 end
 
 %%
@@ -233,34 +207,11 @@ function xDot = fContinuous(x, u)
     
     % Outputs:
     % xDot
+    [q0, q1, q2, q3, wx, wy, wz, px, py, pz, vx, vy, vz] = deal(x(1), x(2), x(3), x(4), x(5), x(6), x(7), x(8), x(9), x(10), x(11), x(12), x(13));
+    [tx, ty, tz, fx, fy, fz] = deal(u(1), u(2), u(3), u(4), u(5), u(6));
 
-    q0 = x(1);
-    q1 = x(2);
-    q2 = x(3);
-    q3 = x(4);
-    wx = x(5);
-    wy = x(6);
-    wz = x(7);
-    px = x(8);
-    py = x(9);
-    pz = x(10);
-    vx = x(11);
-    vy = x(12);
-    vz = x(13);
-
-    tx = u(1);
-    ty = u(2);
-    tz = u(3);
-    fx = u(4);
-    fy = u(5);
-    fz = u(6);
-
-    % parameters
-    Ixx = 1.0e+03 * 0.230242103134935;
-    Iyy = 1.0e+03 * 5.293968876196306;
-    Izz = 1.0e+03 * 5.518363350668759;
-    m = 260;
-    mu = 3.986004418e14;
+    geometryDefinition;
+    mu=3.9860e14;
 
     xDot = [-0.5000*q1*wx - 0.5000*q2*wy - 0.5000*q3*wz;
              0.5000*q0*wx - 0.5000*q3*wy + 0.5000*q2*wz;

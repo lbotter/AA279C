@@ -113,12 +113,6 @@ wxEst = est(5,:);
 wyEst = est(6,:);
 wzEst = est(7,:);
 
-% globe visualization
-globeRadius = 6371000;
-[X,Y,Z] = sphere;
-X2 = X * globeRadius;
-Y2 = Y * globeRadius;
-Z2 = Z * globeRadius;
 
 %%
 Ixx = 1.0e+03 * 0.230242103134935;
@@ -143,15 +137,13 @@ AngVelLVLH = zeros(3, length(q0));
 quatLVLH = zeros(4, length(q0));
 eulerPhiThetaPsi = zeros(3, length(q0));
 eulerPhiThetaPsiEst = zeros(3, length(q0));
+eulerPhiThetaPsiDes = zeros(3, length(q0));
 eulerAngleError = zeros(3, length(q0));
 eulerPhiThetaPsiLVLH = zeros(3, length(q0));
 quaternionError=zeros(4, length(q0));
 angvelerror=zeros(3,length(q0));
-
 varianceEul=zeros(3, length(q0));
-
 stateEstPropogationError = zeros(1, length(q0));
-
 orbitRadius = zeros(1, length(q0));
 
 for i=1:length(q0)
@@ -167,7 +159,8 @@ for i=1:length(q0)
 
     eulerPhiThetaPsi(:,i) = quat2Eul([q0(i); q1(i); q2(i); q3(i)]');
     eulerPhiThetaPsiEst(:,i) = quat2Eul([q0Est(i); q1Est(i); q2Est(i); q3Est(i)]');
-    eulerAngleError(:,i) = abs( eulerPhiThetaPsi(:,i) - eulerPhiThetaPsiEst(:,i) );
+    eulerPhiThetaPsiDes(:,i)=quat2Eul(desiredAttitudeLog(:,i));
+    eulerAngleError(:,i) = abs( eulerPhiThetaPsi(:,i) - eulerPhiThetaPsiDes(:,i) );
     varianceEul(:,i)=quat2Eul(varianceLog(1:4,i)');
 
 
@@ -245,258 +238,56 @@ showConfidence = @(t, data, std_dev) fill([t, fliplr(t)], ...
                                          'r', 'FaceAlpha', 0.3, 'EdgeColor', 'none');
 stLog=sqrt(varianceLog);
 
-%%
+%% CONTROL PLOT
 
 % Variance
 figure; grid on; hold on;
-plot(tLog, varianceLog)
-title("Filter Variances Over Time", 'FontSize', 15, Interpreter="latex")
-legend('$q_0$', '$q_1$', '$q_2$', '$q_3$', "$\omega_x$", "$\omega_y$", "$\omega_z$", 'FontSize', 15, Interpreter="latex")
+plot(tLog, deltaULog)
+title("Forces applied by AC", 'FontSize', 15, Interpreter="latex")
+legend('$M_x$', '$M_y$', '$M_z$', Interpreter="latex")
+xlabel('Time (s)')
+xlim([0,tLog(end)])
+
+%% Overlap disturb and actuation
+figure; grid on; hold on;
+plot(tLog, gravityTorqueLog+magneticTorqueLog+aeroTorqueLog)
+hold on
+plot(tLog, deltaULog);
+title("Disturbancies", 'FontSize', 15, Interpreter="latex")
+legend("$M_x$ ", "$M_y$", "$M_z$","$M_{cx}$ ", "$M_{cy}$", "$M_{cz}$",Interpreter="latex")
+xlabel('Time (s)')
+ylabel('Angle (deg)')
+xlim([0,tLog(end)])
+
+%% Desired attitude vs real attitude
+% Quaternion difference
+figure; grid on; hold on;
+plot(tLog,true(1:4,:))
+hold on
+plot(tLog, desiredAttitudeLog);
+title("Desired attitude and real attitude", 'FontSize', 15, Interpreter="latex")
+legend("q_0","q_1","q_2","q_3","q_{d0}","q_{d1}","q_{d2}","q_{d3}", Interpreter="latex")
 xlabel('Time (s)')
 xlim([0,tLog(end)])
 
 % Euler angles error
-figure; grid on; hold on;
-plot(tLog, rad2deg(eulerAngleError))
-title("Attitude Estimate Error (Euler Angles)", 'FontSize', 15, Interpreter="latex")
-legend("$\phi$ Err.", "$\theta$ Err.", "$\psi$ Err.", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('Angle (deg)')
-xlim([0,tLog(end)])
-
-%% 
-
-% Show confidence intervals using standard deviation
-showConfidence = @(t, data, std_dev) fill([t, fliplr(t)], ...
-                                         [data + 2*std_dev, fliplr(data - 2*std_dev)], ...
-                                         'r', 'FaceAlpha', 0.3, 'EdgeColor', 'none');
-
-% Quaternions error
-figure; grid on; hold on;
-plot(tLog, quaternionError)
-title("Attitude Estimate Error (Quaternions)", 'FontSize', 15, Interpreter="latex")
-legend("$q_0$ Err.", "$q_1$ Err.", "$q_2$ Err.","$q_3$ Err", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('Quaternion')
-xlim([0,tLog(end)])
-
-
-% Average
-figure; grid on; hold on;
-plot(tLog, mean(quaternionError,1))
-title("Attitude Estimate Error avg(Quaternions)", 'FontSize', 15, Interpreter="latex")
-legend("avg error", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('Quaternion')
-xlim([0,tLog(end)])
-
-figure; grid on; hold on;
-title("Quaternion Parameters Ground Truth", 'FontSize', 15, Interpreter="latex")
-plot(tLog, q0)
-plot(tLog, q1)
-plot(tLog, q2)
-plot(tLog, q3)
-xlabel('Time (s)')
-legend('$q_0$', '$q_1$', '$q_2$', '$q_3$', 'FontSize', 15, Interpreter="latex")
-xlim([0,tLog(end)])
-
-
-figure; grid on; hold on;
-title("Quaternion Parameters Estimate with std", 'FontSize', 15, Interpreter="latex")
-plot(tLog, q0Est)
-plot(tLog, q1Est)
-plot(tLog, q2Est)
-plot(tLog, q3Est)
-showConfidence(tLog,q0Est,stLog(1,:));
-showConfidence(tLog,q1Est,stLog(2,:));
-showConfidence(tLog,q2Est,stLog(3,:));
-showConfidence(tLog,q3Est,stLog(4,:));
-xlabel('Time (s)')
-legend('$q_0$ Est.', '$q_1$ Est.', '$q_2$ Est.', '$q_3$ Est.', 'FontSize', 15, Interpreter="latex")
-xlim([0,tLog(end)])
-%%
-
-index=tLog>200;
-mean_error=mean(rad2deg((quaternionError(:,index))),2)
-std_error=std(rad2deg(quaternionError(:,index)),0,2)
-
-
-%%
-
-% Euler angles
-stEul=rad2deg(sqrt(varianceEul));
-
-% mean euler angle error
-clear mean
-figure; grid on; hold on;
-plot(tLog, rad2deg(mean(eulerAngleError,1)))
-title("Attitude Estimate Error (Euler Angles)", 'FontSize', 15, Interpreter="latex")
-legend("Avg total error", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('Angle (deg)')
-xlim([0,tLog(end)])
-
-
-
-figure; grid on; hold on;
-plot(tLog, rad2deg(eulerPhiThetaPsi))
-title("Euler Angles (ECI)")
-legend("$\phi$", "$\theta$", "$\psi$", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('Angle (deg)')
-xlim([0,tLog(end)])
-
-figure; grid on; hold on;
-plot(tLog, rad2deg(eulerPhiThetaPsiEst))
-title("Euler Angles Estimate (ECI)")
-hold on
-showConfidence(tLog,rad2deg(eulerPhiThetaPsiEst(1,:)),stEul(1,:));
-showConfidence(tLog,rad2deg(eulerPhiThetaPsiEst(2,:)),stEul(2,:));
-showConfidence(tLog,rad2deg(eulerPhiThetaPsiEst(3,:)),stEul(3,:));
-legend("$\phi$ Est.", "$\theta$ Est.", "$\psi$ Est.", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('Angle (deg)')
-xlim([0,tLog(end)])
-
-% Estimate error after settling time
-index=tLog>200;
-mean_error=mean(rad2deg((eulerAngleError(:,index))),2)
-std_error=std(rad2deg(eulerAngleError(:,index)),0,2)
-
-
-
-%%
-
-% Angular velocities
-
-figure; grid on; hold on;
-plot(tLog, [wx;wy;wz])
-title("Angular Velocities In Principal Frame")
-legend("$\omega_x$", "$\omega_y$", "$\omega_z$", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('Angular Rate (rad/s)')
-xlim([0,tLog(end)])
-
-
-figure; grid on; hold on;
-plot(tLog, [wxEst;wyEst;wzEst])
-showConfidence(tLog,wxEst,stLog(5,:));
-showConfidence(tLog,wyEst,stLog(6,:));
-showConfidence(tLog,wzEst,stLog(7,:));
-title("Angular Velocities In Principal Frame")
-legend("$\omega_x$ Est.", "$\omega_y$ Est.", "$\omega_z$ Est.", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('Angular Rate (rad/s)')
-xlim([0,tLog(end)])
-ylim([-0.02,0.02])
-
-% error
-figure; grid on; hold on;
-plot(tLog,angvelerror)
-title("Angular velocities estimate error", 'FontSize', 15, Interpreter="latex")
-legend("$w_x$ Err.", "$w_y$ Err.", "$w_z$ Err.", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('Quaternion')
-xlim([0,tLog(end)])
-
-
-% Average
-figure; grid on; hold on;
-plot(tLog, mean(angvelerror,1))
-title("Angular velocities RMSE", 'FontSize', 15, Interpreter="latex")
-legend("avg error", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('rad/s')
-xlim([0,tLog(end)])
-
-
-
-%%
-index=tLog>200;
-mean_error=mean(rad2deg((angvelerror(:,index))),2)
-std_error=std(rad2deg(eulerAngleError(:,index)),0,2)
-
-
-%%
-% Residuals
-
-smoothedDataPre = smooth(tLog, vecnorm(preFitLog(7:9,:)), 0.01, 'lowess'); % Adjust 0.1 for more or less smoothing
 subplot(2,1,1)
-plot(tLog, vecnorm(preFitLog(7:9,:),2),'+b');
+grid on; hold on;
+plot(tLog, rad2deg(eulerPhiThetaPsi))
 hold on
-plot(tLog,smoothedDataPre,'r');
-title("Pre fit residuals norm for magnetometer")
-legend("pre fit","smoothed data", Interpreter="latex")
+plot(tLog, rad2deg(eulerPhiThetaPsiDes))
+title("Euler Angles (ECI)")
+legend("$\phi$", "$\theta$", "$\psi$", "$\phi_d$", "$\theta_d$", "$\psi_d$",'FontSize', 15, Interpreter="latex")
 xlabel('Time (s)')
-ylabel('Residual')
+ylabel('Angle (deg)')
 xlim([0,tLog(end)])
-grid on
-
-% Residuals
-windowSize=100;
-smoothedDataPost = smooth(tLog, vecnorm(postFitLog(7:9,:)), 0.01, 'lowess'); % Adjust 0.1 for more or less smoothing
 subplot(2,1,2)
-plot(tLog, vecnorm(postFitLog(7:9,:),2),'+b');
-hold on
-plot(tLog,smoothedDataPost,'r');
-title("Post fit residuals norm for magnetometer")
-legend("post fit","smoothed data", Interpreter="latex")
+grid on; hold on;
+plot(tLog, rad2deg(eulerAngleError))
+title("Euler Angles error (ECI)")
+legend("$\phi$", "$\theta$", "$\psi$",'FontSize', 15, Interpreter="latex")
 xlabel('Time (s)')
-ylabel('Residual')
-xlim([0,tLog(end)])
-grid on
-
-%%
-index=tLog>200;
-mean_error_pre=mean(preFitLog(1:3,:),2);
-std_error_pre=std(preFitLog(1:3,:),0,2);
-
-index=tLog>200;
-mean_error_post=mean(postFitLog(1:3,:),2);
-std_error_post=std(postFitLog(1:3,:),0,2);
-
-
-
-
-
-%%
-
-figure; grid on; hold on;
-plot(tLog, stateEstPropogationError)
-title("State Estimator Propogation Error (2-norm Across All Attitude States)", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('Magnitude')
+ylabel('Angle (deg)')
 xlim([0,tLog(end)])
 
-figure; grid on; hold on;
 
-% Show confidence intervals using standard deviation
-showConfidence = @(t, data, std_dev) fill([t, fliplr(t)], ...
-                                         [data + 2*std_dev, fliplr(data - 2*std_dev)], ...
-                                         'r', 'FaceAlpha', 0.3, 'EdgeColor', 'none');
-stdLog=sqrt(varianceLog);
-% Plot the confidence interval for q0Est
-showConfidence(tLog, q0Est, stdLog(1,:))
-
-% Plot the estimate for q0Est
-q0Plot = plot(tLog, q0Est);
-legend()
-
-% Add labels and legend
-xlabel('Time');
-ylabel('q0 Estimate');
-legend;
-title('q0 Estimate with Confidence Interval');
-
-% Calculate and plot statistics at steady state (assume steady state after time > 50)
-steady_state_indices = find(tLog > 500);
-mean_errors = mean(eulerAngleError(:, steady_state_indices), 2);
-std_errors = std(eulerAngleError(:, steady_state_indices), 0, 2);
-
-figure;
-errorbar([1,2,3], mean_errors, std_errors, 'o');
-title('True Attitude Estimation Errors Statistics at Steady State');
-xlabel('Axis');
-ylabel('Error');
-xticks([1 2 3]);
-xticklabels({'X', 'Y', 'Z'});

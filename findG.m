@@ -1,4 +1,5 @@
-    g = [wx;    % gyro
+
+g = [   wx;    % gyro
          wy;
          wz;
          q2^2 - q1^2 - q0^2 + q3^2; % sun sensor
