@@ -4,7 +4,7 @@ clc;
 close all;
 
 % Define all the attitude and orbital parameters
-params;
+Params;
 
 % Define all the sensor errors and biases
 sensorsDefinition;

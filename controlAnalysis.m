@@ -1,102 +1,3 @@
-%% Functions
-function out = skew(x)
-a = x(1);
-b = x(2);
-c = x(3);
-
-out = [0  -c   b;
-       c   0  -a;
-      -b   a   0];
-end
-
-function quat = DCMtoQuaternion(DCM)
-% FUNCTION NAME:
-%   DCMtoQuaternion
-%
-% DESCRIPTION:
-%    This function converts a rotation represented in directional cosine 
-%    matrix form to a rotation represented in unit quaternion form.
-%
-% INPUTS:
-%   DCM       double   3x3   Input directional cosine matrix.
-%
-% OUTPUTS:
-%   q         double   4x1   Output quaternion corresponding to the rotation represented by the input DCM.
-
-quat = zeros(4, 1);
-u = reshape(DCM, 9, 1); 
-% u = DCM flattened
-
-trace = u(1) + u(5) + u(9);
-if trace > 0
-    z =sqrt(trace+1);
-    b = [u(8)-u(6), u(3)-u(7), u(4)-u(2)]./(z*2);
-    quat = [0.5*z, b(1), b(2), b(3)]';
-else
-    if u(5) > u(1) && u(5) > u(9)
-        s = sqrt(u(5) - (u(1)+u(9)) + 1);
-        a = 0;
-        if s~=0; a = 0.5/s; end
-        b = a.*[u(4)+u(2), u(8)+u(6), u(3)-u(7)];
-        quat = [b(3), b(1), 0.5*s, b(2)]';
-    elseif u(9) > u(1)
-        s = sqrt(u(9) - (u(1)+u(5)) + 1);
-        a = 0;
-        if s~=0; a = 0.5/s; end
-        b = a.*[u(3)+u(7), u(8)+u(6), u(4)-u(2)];
-        quat = [b(3), b(1), b(2), 0.5*s]';
-    else
-        s = sqrt(u(1) - (u(5)+u(9)) + 1);
-        a = 0;
-        if s~=0; a = 0.5/s; end
-        b = a.*[u(4)+u(2), u(3)+u(7), u(8)-u(6)];
-        quat = [b(3), 0.5*s, b(1), b(2)]';
-    end
-end
-
-quat = quat ./ norm(quat);
-
-end
-
-function q = quaternionMultiply(q1, q2)
-    %{
-        Function: quaternionMultiply.m
-        Input(s): 
-            1) q1: First quaternion - [4x1]
-            2) q2: Second quaternion - [4x1]
-        Output(2):
-            1) q: Resultant quaternion - [4x1]
-        Usage: Perform multiplication of the two input quaternions
-                q = q1*q2
-        Reference: https://www.mathworks.com/help/aerotbx/ug/quatmultiply.html
-    %}
-    q1 = q1(:);
-    q2 = q2(:);
-    q = [q1(1), -q1(2:4)';
-        q1(2:4), q1(1)*eye(3) + skew(q1(2:4))] * q2;
-
-    if q(1) < 0
-        q = -1*q;
-    end
-end
-
-function qInv = quaternionInverse(q)
-    %{
-        Function: quaternionInverse.m
-        Input(s): 
-            1) q: quaternion - [4x1]
-        Output(2):
-            1) qInv: Inverse quaternion - [4x1]
-        Usage: Compute inverse of the input quaternion
-                qInv = q^(-1)
-        Reference: https://www.mathworks.com/help/aerotbx/ug/quatinv.html
-    %}
-    
-    qInv = [q(1); -q(2); -q(3); -q(4)];
-    qInv = qInv ./ norm(qInv);
-end
-
-
 % Pre processing
 true = xLog;
 est = meanLog;
@@ -289,5 +190,104 @@ legend("$\phi$", "$\theta$", "$\psi$",'FontSize', 15, Interpreter="latex")
 xlabel('Time (s)')
 ylabel('Angle (deg)')
 xlim([0,tLog(end)])
+
+
+%% Functions
+function out = skew(x)
+a = x(1);
+b = x(2);
+c = x(3);
+
+out = [0  -c   b;
+       c   0  -a;
+      -b   a   0];
+end
+
+function quat = DCMtoQuaternion(DCM)
+% FUNCTION NAME:
+%   DCMtoQuaternion
+%
+% DESCRIPTION:
+%    This function converts a rotation represented in directional cosine 
+%    matrix form to a rotation represented in unit quaternion form.
+%
+% INPUTS:
+%   DCM       double   3x3   Input directional cosine matrix.
+%
+% OUTPUTS:
+%   q         double   4x1   Output quaternion corresponding to the rotation represented by the input DCM.
+
+quat = zeros(4, 1);
+u = reshape(DCM, 9, 1); 
+% u = DCM flattened
+
+trace = u(1) + u(5) + u(9);
+if trace > 0
+    z =sqrt(trace+1);
+    b = [u(8)-u(6), u(3)-u(7), u(4)-u(2)]./(z*2);
+    quat = [0.5*z, b(1), b(2), b(3)]';
+else
+    if u(5) > u(1) && u(5) > u(9)
+        s = sqrt(u(5) - (u(1)+u(9)) + 1);
+        a = 0;
+        if s~=0; a = 0.5/s; end
+        b = a.*[u(4)+u(2), u(8)+u(6), u(3)-u(7)];
+        quat = [b(3), b(1), 0.5*s, b(2)]';
+    elseif u(9) > u(1)
+        s = sqrt(u(9) - (u(1)+u(5)) + 1);
+        a = 0;
+        if s~=0; a = 0.5/s; end
+        b = a.*[u(3)+u(7), u(8)+u(6), u(4)-u(2)];
+        quat = [b(3), b(1), b(2), 0.5*s]';
+    else
+        s = sqrt(u(1) - (u(5)+u(9)) + 1);
+        a = 0;
+        if s~=0; a = 0.5/s; end
+        b = a.*[u(4)+u(2), u(3)+u(7), u(8)-u(6)];
+        quat = [b(3), 0.5*s, b(1), b(2)]';
+    end
+end
+
+quat = quat ./ norm(quat);
+
+end
+
+function q = quaternionMultiply(q1, q2)
+    %{
+        Function: quaternionMultiply.m
+        Input(s): 
+            1) q1: First quaternion - [4x1]
+            2) q2: Second quaternion - [4x1]
+        Output(2):
+            1) q: Resultant quaternion - [4x1]
+        Usage: Perform multiplication of the two input quaternions
+                q = q1*q2
+        Reference: https://www.mathworks.com/help/aerotbx/ug/quatmultiply.html
+    %}
+    q1 = q1(:);
+    q2 = q2(:);
+    q = [q1(1), -q1(2:4)';
+        q1(2:4), q1(1)*eye(3) + skew(q1(2:4))] * q2;
+
+    if q(1) < 0
+        q = -1*q;
+    end
+end
+
+function qInv = quaternionInverse(q)
+    %{
+        Function: quaternionInverse.m
+        Input(s): 
+            1) q: quaternion - [4x1]
+        Output(2):
+            1) qInv: Inverse quaternion - [4x1]
+        Usage: Compute inverse of the input quaternion
+                qInv = q^(-1)
+        Reference: https://www.mathworks.com/help/aerotbx/ug/quatinv.html
+    %}
+    
+    qInv = [q(1); -q(2); -q(3); -q(4)];
+    qInv = qInv ./ norm(qInv);
+end
 
 
