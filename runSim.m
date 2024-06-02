@@ -12,7 +12,9 @@ sensorsDefinition;
 % Time loop
 for k = 0:length(0:dt:tf)
     currentTime = tLog(k+1);
-
+    if mod(currentTime,10)==0
+        currentTime
+    end
     % Computing external disturbancies 
     gravityGradientTorque = gravityGradient(I_principal, x);
     magneticTorque = magneticTorques(x, currentTime);
@@ -20,7 +22,7 @@ for k = 0:length(0:dt:tf)
     aeroTorque = aeroTorques(x, geometryPrincipalFrame);  
     
     % u: external input, [tx; ty; tz; fx; fy; fz]
-    u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque+deltaU;
+    %u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque+deltaU;
     u(1:3) = deltaU;
 
     % Update the ground truth
@@ -31,9 +33,8 @@ for k = 0:length(0:dt:tf)
 
     % Computing the desired attitude
     qDes=desiredAttitude(earthPointingVec, trackPointingVec,-xNew(8:10),principal2Inertial(xNew(1:4))*xNew(11:13));
-    deltaULarge=controlLinear(meanNew(1:4),qDes,meanNew(5:7),responseF);
-    deltaU=controlLarge(meanNew(1:4),qDes,meanNew(5:7),responseF);
-
+    %deltaULarge=controlLinear(meanNew(1:4),qDes,meanNew(5:7),responseF);
+    [deltaU,a]=controlLarge(meanNew(1:4),qDes,a,dt,kp,kd);
 
     % figure(1)
     % plot(currentTime,deltaU,'ob');

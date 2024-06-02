@@ -5,7 +5,7 @@
 dt = 0.01; 
 
 % Final time 
-tf = 100; 
+tf = 500; 
 %% SATELLITE GEOMETRY PARAMETERS
 % Satellite Mass
 m = 260;
@@ -39,12 +39,25 @@ u = [0; 0; 0; 0; 0; 0];
 mu = 3.986004418e14;
 theta = 53; % deg rotation around x
 q0 = angle2Quaternion(theta);
-
+q0=[0.6328;
+    0.3155;
+   -0.6328;
+   -0.3155];
 %Initial position
 p0 = [550000 + 6371000; 0; 0];
 % Initial velocity
 v0Inertial = [0; 7597.12185726588*cosd(53); 7597.12185726588*sind(53)];
 v0 = principal2Inertial(q0).' * v0Inertial;
+
+%% SATELLITE ATTITUDE POSITIONING
+
+% Vectors in principal frame that need to point the earth or the direction
+% of motion
+
+earthPointingVec=[0;0;1]; 
+trackPointingVec=[0;1;0];
+
+responseF=100;
 
 %% EKF PARAMETERS
 
@@ -73,8 +86,14 @@ T = sqrt((4 * pi^2 * p0(1)^3) / (mu));
 mean_w = 2 *pi/ T;
 w0 = R_P2B.' * [0.01; 0.01; 0.01];
 
+
+% PD Controller
+kp=f^2/Izz;
+kd=2*sqrt(Izz*(3*n^2*(Iyy-Ixx)+kp));
+
 % Building the vectors to propagate
 x = [q0; w0; p0; v0];
+deltaU=[0;0;0];
 meancomp = [q0; w0];
 meanPredict = [q0; w0];
 cov = 0.01*eye(length(meancomp));
@@ -96,10 +115,12 @@ uLog = zeros(6,(tf/dt)+2);
 xLog = zeros(length(x),(tf/dt)+2);
 yLog = zeros(9,(tf/dt)+2);
 tLog = 0:dt:(tf+dt);
-
+deltaULog = zeros(3,(tf/dt)+2);
+desiredAttitudeLog = zeros(4,(tf/dt)+2);
 
 meanLog         = zeros(length(meancomp),(tf/dt)+2);
 meanPredictLog  = zeros(length(meancomp),(tf/dt)+2);
 varianceLog     = zeros(length(meancomp),(tf/dt)+2);
 preFitLog       = zeros(9,(tf/dt)+2);
 postFitLog      = zeros(9,(tf/dt)+2);
+a=[0;0;0];
