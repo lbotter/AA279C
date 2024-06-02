@@ -85,10 +85,10 @@ end
 T = sqrt((4 * pi^2 * p0(1)^3) / (mu));
 mean_w = 2 *pi/ T;
 w0 = R_P2B.' * [0.01; 0.01; 0.01];
-
+n=mean_w;
 
 % PD Controller
-kp=f^2/Izz;
+kp=responseF^2/Izz;
 kd=2*sqrt(Izz*(3*n^2*(Iyy-Ixx)+kp));
 
 % Building the vectors to propagate
