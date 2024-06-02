@@ -22,9 +22,7 @@ for k = 0:length(0:dt:tf)
     aeroTorque = aeroTorques(x, geometryPrincipalFrame);  
     
     % u: external input, [tx; ty; tz; fx; fy; fz]
-    %u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque+deltaU;
-    u(1:3) = deltaU;
-
+    u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque+deltaU;
     % Update the ground truth
     [xNew, y] = fDiscreteRK4(x, u, currentTime, dt);
 
