@@ -17,7 +17,7 @@ ATarget=quat2dcm(qTarget');
 AErr=AEst*ATarget';
 alpha=[AErr(2,3)-AErr(3,2);AErr(3,1)-AErr(1,3);AErr(1,2)-AErr(2,1)];
 alphaDot=(alpha-alphaOld)/dt;
-Mc=-kp*[AErr(2,3)-AErr(3,2);AErr(3,1)-AErr(1,3);AErr(1,2)-AErr(2,1)]/2-kd*alphaDot;
+Mc=-kp.*[AErr(2,3)-AErr(3,2);AErr(3,1)-AErr(1,3);AErr(1,2)-AErr(2,1)]/2-kd.*alphaDot;
 
 
 end

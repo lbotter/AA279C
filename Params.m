@@ -5,7 +5,7 @@
 dt = 0.01; 
 
 % Final time 
-tf = 100; 
+tf = 1500; 
 %% SATELLITE GEOMETRY PARAMETERS
 % Satellite Mass
 m = 260;
@@ -88,8 +88,18 @@ w0 = R_P2B.' * [0.01; 0.01; 0.01];
 n=mean_w;
 
 % PD Controller
-kp=responseF^2/Izz;
-kd=2*sqrt(Izz*(3*n^2*(Iyy-Ixx)+kp));
+% kp=responseF^2/Izz;
+% kd=2*sqrt(Izz*(3*n^2*(Iyy-Ixx)+kp));
+
+zeta = 0.707;
+nFreq = 0.05;
+kd = 2*zeta*nFreq*[Ixx;
+                   Iyy;
+                   Izz];
+      
+kp = (nFreq^2)*[Ixx;
+                Iyy;
+                Izz];
 
 % Building the vectors to propagate
 x = [q0; w0; p0; v0];
