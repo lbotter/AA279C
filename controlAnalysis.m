@@ -160,6 +160,16 @@ xlabel('Time (s)')
 ylabel('Angle (deg)')
 xlim([0,tLog(end)])
 
+%% Overlap cmd torque and actuator torque
+figure; grid on; hold on;
+plot(tLog, deltaULog, '--', "LineWidth", 1.5)
+plot(tLog, reactionWheelTorqueLog, "LineWidth", 1.5)
+title("Reaction Wheel Torque, Commanded Vs. Actual", 'FontSize', 15, Interpreter="latex")
+legend("$M_{x_{cmd}}$", "$M_{y_{cmd}}$", "$M_{z_{cmd}}$","$M_x$ ", "$M_y$", "$M_z$", 'FontSize', 15, Interpreter="latex")
+xlabel('Time (s)')
+ylabel('Torque (Nm)')
+xlim([0,tLog(end)])
+
 %% Desired attitude vs real attitude
 % Quaternion difference
 figure; grid on; hold on;

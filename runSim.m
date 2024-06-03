@@ -12,9 +12,9 @@ sensorsDefinition;
 % Time loop
 for k = 0:length(0:dt:tf)
     currentTime = tLog(k+1);
-    if mod(currentTime,10)==0
-        currentTime
-    end
+    % if mod(currentTime,10)==0
+    %     currentTime
+    % end
     % Computing external disturbancies 
     gravityGradientTorque = gravityGradient(I_principal, x);
     magneticTorque = magneticTorques(x, currentTime);
@@ -22,17 +22,19 @@ for k = 0:length(0:dt:tf)
     aeroTorque = aeroTorques(x, geometryPrincipalFrame);  
     
     % u: external input, [tx; ty; tz; fx; fy; fz]
-    u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque+deltaU;
+    u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque + reactionWheelTorque;
     % Update the ground truth
     [xNew, y] = fDiscreteRK4(x, u, currentTime, dt);
 
     % Applying the EKF
-    [meanPredict, covPredict, meanNew, covNew,prefit,postfit] = EKF(x, u, y, meancomp, cov, Q, R, dt, currentTime);
+    [meanPredict, covPredict, meanNew, covNew, prefit, postfit] = EKF(x, u, y, meancomp, cov, Q, R, dt, currentTime);
 
     % Computing the desired attitude
     qDes=desiredAttitude(earthPointingVec, trackPointingVec,-xNew(8:10),principal2Inertial(xNew(1:4))*xNew(11:13));
     %deltaULarge=controlLinear(meanNew(1:4),qDes,meanNew(5:7),responseF);
     [deltaU,a]=controlLarge(meanNew(1:4),qDes,a,dt,kp,kd);
+
+    reactionWheelTorque = reactionWheelActuator(deltaU);
 
     % figure(1)
     % plot(currentTime,deltaU,'ob');
@@ -40,7 +42,6 @@ for k = 0:length(0:dt:tf)
     % plot(currentTime,deltaULarge,'+r');
     % pause(0.2)
     % hold on
-
 
     % Update the variables in the loop
     x = xNew;
@@ -66,11 +67,13 @@ for k = 0:length(0:dt:tf)
     solarTorqueLog(:,k+1) = solarTorque;
     aeroTorqueLog(:,k+1) = aeroTorque;
     deltaULog(:,k+1) = deltaU;
+    reactionWheelTorqueLog(:,k+1) = reactionWheelTorque;
     desiredAttitudeLog(:,k+1)=qDes;
 
 end
 
 controlAnalysis;
+% plotResults;
 %% functions
 
 function [meanPredict, covPredict, meanUpdate, covUpdate,prefit,postfit] = EKF(x, u, y, meancomp, cov, Q, R, dt, t)

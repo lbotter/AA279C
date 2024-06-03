@@ -5,7 +5,7 @@
 dt = 0.01; 
 
 % Final time 
-tf = 500; 
+tf = 100; 
 %% SATELLITE GEOMETRY PARAMETERS
 % Satellite Mass
 m = 260;
@@ -97,6 +97,7 @@ deltaU=[0;0;0];
 meancomp = [q0; w0];
 meanPredict = [q0; w0];
 cov = 0.01*eye(length(meancomp));
+reactionWheelTorque = [0;0;0];
 
 % Initializing variables to store
 gravityTorqueMagLog     = zeros(1,(tf/dt)+2);
@@ -116,6 +117,7 @@ xLog = zeros(length(x),(tf/dt)+2);
 yLog = zeros(9,(tf/dt)+2);
 tLog = 0:dt:(tf+dt);
 deltaULog = zeros(3,(tf/dt)+2);
+reactionWheelTorqueLog = zeros(3,(tf/dt)+2);
 desiredAttitudeLog = zeros(4,(tf/dt)+2);
 
 meanLog         = zeros(length(meancomp),(tf/dt)+2);
