@@ -32,7 +32,9 @@ for k = 0:length(0:dt:tf)
     % Computing the desired attitude
     qDes=desiredAttitude(earthPointingVec, trackPointingVec,-xNew(8:10),principal2Inertial(xNew(1:4))*xNew(11:13));
     %deltaULarge=controlLinear(meanNew(1:4),qDes,meanNew(5:7),responseF);
-    [deltaU,a]=controlLarge(meanNew(1:4),qDes,a,dt,kp,kd);
+    % [deltaU,a]=controlLarge(meanNew(1:4),qDes,a,dt,kp,kd);
+
+    [deltaU, ~] = controlLarge(meanNew, qDes, kp, kd);
 
     reactionWheelTorque = reactionWheelActuator(deltaU);
 
@@ -78,7 +80,6 @@ controlAnalysis;
 
 function [meanPredict, covPredict, meanUpdate, covUpdate,prefit,postfit] = EKF(x, u, y, meancomp, cov, Q, R, dt, t)
     
-
     [q0, q1, q2, q3, wx, wy, wz] = deal(meancomp(1), meancomp(2), meancomp(3), meancomp(4), meancomp(5), meancomp(6), meancomp(7));
     [px, py, pz, vx, vy, vz] = deal(x(8), x(9), x(10), x(11), x(12), x(13));
     [tx, ty, tz, fx, fy, fz] = deal(u(1), u(2), u(3), u(4), u(5), u(6));
@@ -195,7 +196,6 @@ function [xNew, y] = fDiscreteRK4(x, u, t, dt)
          addNoise(g(7), magSensor);
          addNoise(g(8), magSensor);
          addNoise(g(9), magSensor)];
-    y = g;
 end
 
 %%

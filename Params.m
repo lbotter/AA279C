@@ -5,7 +5,7 @@
 dt = 0.01; 
 
 % Final time 
-tf = 1500; 
+tf = 1000; 
 %% SATELLITE GEOMETRY PARAMETERS
 % Satellite Mass
 m = 260;
