@@ -272,29 +272,42 @@ showConfidence = @(t, data, std_dev) fill([t, fliplr(t)], ...
                                          'r', 'FaceAlpha', 0.3, 'EdgeColor', 'none');
 
 % Quaternions error
-figure; grid on; hold on;
-plot(tLog, quaternionError)
-title("Attitude Estimate Error (Quaternions)", 'FontSize', 15, Interpreter="latex")
-legend("$q_0$ Err.", "$q_1$ Err.", "$q_2$ Err.","$q_3$ Err", 'FontSize', 15, Interpreter="latex")
+subplot(2,1,2)
+grid on; hold on;
+plot(tLog, q0Est)
+hold on
+plot(tLog, q1Est)
+hold on
+plot(tLog, q2Est)
+hold on
+plot(tLog, q3Est)
+hold on
+title("Attitude Estimate (Quaternions)", 'FontSize', 15, Interpreter="latex")
+legend('$q_0$ Est.', '$q_1$ Est.', '$q_2$ Est.', '$q_3$ Est.', 'FontSize', 15, Interpreter="latex")
 xlabel('Time (s)')
 ylabel('Quaternion')
 xlim([0,tLog(end)])
 
 
 % Average
-figure; grid on; hold on;
-plot(tLog, mean(quaternionError,1))
-title("Attitude Estimate Error avg(Quaternions)", 'FontSize', 15, Interpreter="latex")
-legend("avg error", 'FontSize', 15, Interpreter="latex")
-xlabel('Time (s)')
-ylabel('Quaternion')
-xlim([0,tLog(end)])
+% grid on; hold on;
+% plot(tLog, mean(quaternionError,1))
+% title("Attitude Estimate Error avg(Quaternions)", 'FontSize', 15, Interpreter="latex")
+% legend("avg error", 'FontSize', 15, Interpreter="latex")
+% xlabel('Time (s)')
+% ylabel('Quaternion')
+% xlim([0,tLog(end)])
 
-figure; grid on; hold on;
+subplot(2,1,1)
+grid on;
 title("Quaternion Parameters Ground Truth", 'FontSize', 15, Interpreter="latex")
+hold on
 plot(tLog, q0)
+hold on
 plot(tLog, q1)
+hold on
 plot(tLog, q2)
+hold on
 plot(tLog, q3)
 xlabel('Time (s)')
 legend('$q_0$', '$q_1$', '$q_2$', '$q_3$', 'FontSize', 15, Interpreter="latex")
@@ -328,7 +341,8 @@ stEul=rad2deg(sqrt(varianceEul));
 
 % mean euler angle error
 clear mean
-figure; grid on; hold on;
+subplot(2,1,2);
+grid on; hold on;
 plot(tLog, rad2deg(mean(eulerAngleError,1)))
 title("Attitude Estimate Error (Euler Angles)", 'FontSize', 15, Interpreter="latex")
 legend("Avg total error", 'FontSize', 15, Interpreter="latex")
@@ -337,19 +351,25 @@ ylabel('Angle (deg)')
 xlim([0,tLog(end)])
 
 
-
-figure; grid on; hold on;
+%%
+subplot(2,1,1);
+grid on; hold on;
 plot(tLog, rad2deg(eulerPhiThetaPsi))
 title("Euler Angles (ECI)")
-legend("$\phi$", "$\theta$", "$\psi$", 'FontSize', 15, Interpreter="latex")
+legend("$\phi$", "$\theta$", "$\psi$", Interpreter="latex")
 xlabel('Time (s)')
 ylabel('Angle (deg)')
 xlim([0,tLog(end)])
 
-figure; grid on; hold on;
+subplot(2,1,2);
+grid on; hold on;
 plot(tLog, rad2deg(eulerPhiThetaPsiEst))
 title("Euler Angles Estimate (ECI)")
-hold on
+legend("$\phi$ Est.", "$\theta$ Est.", "$\psi$ Est.",Interpreter="latex")
+xlim([0,tLog(end)])
+hold off
+
+%%
 showConfidence(tLog,rad2deg(eulerPhiThetaPsiEst(1,:)),stEul(1,:));
 showConfidence(tLog,rad2deg(eulerPhiThetaPsiEst(2,:)),stEul(2,:));
 showConfidence(tLog,rad2deg(eulerPhiThetaPsiEst(3,:)),stEul(3,:));
@@ -368,22 +388,22 @@ std_error=std(rad2deg(eulerAngleError(:,index)),0,2)
 %%
 
 % Angular velocities
-
-figure; grid on; hold on;
+subplot(2,1,1)
+grid on; hold on;
 plot(tLog, [wx;wy;wz])
-title("Angular Velocities In Principal Frame")
+title("Angular Velocities GT In Principal Frame")
 legend("$\omega_x$", "$\omega_y$", "$\omega_z$", 'FontSize', 15, Interpreter="latex")
 xlabel('Time (s)')
 ylabel('Angular Rate (rad/s)')
 xlim([0,tLog(end)])
 
-
-figure; grid on; hold on;
+subplot(2,1,2)
+grid on; hold on;
 plot(tLog, [wxEst;wyEst;wzEst])
 showConfidence(tLog,wxEst,stLog(5,:));
 showConfidence(tLog,wyEst,stLog(6,:));
 showConfidence(tLog,wzEst,stLog(7,:));
-title("Angular Velocities In Principal Frame")
+title("Angular Velocities Estimate in Principal Frame")
 legend("$\omega_x$ Est.", "$\omega_y$ Est.", "$\omega_z$ Est.", 'FontSize', 15, Interpreter="latex")
 xlabel('Time (s)')
 ylabel('Angular Rate (rad/s)')

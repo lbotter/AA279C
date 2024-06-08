@@ -141,7 +141,7 @@ stLog=sqrt(varianceLog);
 
 %% CONTROL PLOT
 
-% Variance
+% Forces
 figure; grid on; hold on;
 plot(tLog, deltaULog)
 title("Forces applied by AC", 'FontSize', 15, Interpreter="latex")
