@@ -54,10 +54,38 @@ v0 = principal2Inertial(q0).' * v0Inertial;
 % Vectors in principal frame that need to point the earth or the direction
 % of motion
 
-earthPointingVec=[0;0;1]; 
-trackPointingVec=[0;1;0];
+earthPointingVec=[0;0;1]; % z axis points the earth 
+trackPointingVec=[0;1;0]; % y axis points the track
 
-responseF=100;
+% PD controller parameters
+zeta = 0.707;
+nFreq = 0.05;
+
+%% Thrusters
+%capabilities
+Tmax=170e-3;   % Newton
+Tmin=20e-3;
+tburn=2000; % Total burn time for each thruster
+
+
+% Geometry
+
+% Number of thrusters
+N=4;
+% top left
+r(:,1)=[0.05;-2.7892;1.6];
+e(:,1)=[0.5;-1;0.5]/norm([0.5;-1;0.5]);
+% top right
+r(:,2)=[0.05;-2.7892;-1.6];
+e(:,2)=[0.5;-1;-0.5]/norm([0.5;-1;0.5]);
+% bottom left
+r(:,3)=[-0.05;-2.7892;1.6];
+e(:,3)=[-0.5;-1;0.5]/norm([0.5;-1;0.5]);
+% bottom right
+r(:,4)=[-0.05;-2.7892;-1.6];
+e(:,4)=[-0.5;-1;-0.5]/norm([0.5;-1;0.5]);
+
+
 
 %% EKF PARAMETERS
 
@@ -87,12 +115,8 @@ mean_w = 2 *pi/ T;
 w0 = R_P2B.' * [0.01; 0.01; 0.01];
 n=mean_w;
 
-% PD Controller
-% kp=responseF^2/Izz;
-% kd=2*sqrt(Izz*(3*n^2*(Iyy-Ixx)+kp));
+% PD controller 
 
-zeta = 0.707;
-nFreq = 0.05;
 kd = 2*zeta*nFreq*[Ixx;
                    Iyy;
                    Izz];
@@ -100,6 +124,11 @@ kd = 2*zeta*nFreq*[Ixx;
 kp = (nFreq^2)*[Ixx;
                 Iyy;
                 Izz];
+% Thrust matrix
+AThrusters=zeros(3,N);
+for i=1:N
+    AThrusters(:,i)=cross(r(:,i),e(:,i));
+end
 
 % Building the vectors to propagate
 x = [q0; w0; p0; v0];
