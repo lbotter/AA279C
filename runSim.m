@@ -36,7 +36,7 @@ for k = 0:length(0:dt:tf)
 
     [deltaU, ~] = controlLarge(meanNew, qDes, kp, kd);
 
-    reactionWheelTorque = reactionWheelActuator(deltaU);
+    [reactionWheelTorque, wsOut] = reactionWheelActuator(x, deltaU, rWheel, dt);
 
     % figure(1)
     % plot(currentTime,deltaU,'ob');
@@ -70,6 +70,7 @@ for k = 0:length(0:dt:tf)
     aeroTorqueLog(:,k+1) = aeroTorque;
     deltaULog(:,k+1) = deltaU;
     reactionWheelTorqueLog(:,k+1) = reactionWheelTorque;
+    reactionWheelSpeedLog(:,k+1) = wsOut;
     desiredAttitudeLog(:,k+1)=qDes;
 
 end

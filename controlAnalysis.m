@@ -170,6 +170,14 @@ xlabel('Time (s)')
 ylabel('Torque (Nm)')
 xlim([0,tLog(end)])
 
+%% Plot reaction wheel speeds in rad/s
+figure; grid on; hold on;
+plot(tLog, reactionWheelSpeedLog, "LineWidth", 1.5)
+title("Reaction Wheel Speeds", 'FontSize', 15, Interpreter="latex")
+legend("$\omega_{1}$", "$\omega_{2}$", "$\omega_{3}$", "$\omega_{4}$", 'FontSize', 15, Interpreter="latex")
+xlabel('Time (s)')
+ylabel('Speed (rad/s)')
+xlim([0,tLog(end)])
 %% Desired attitude vs real attitude
 % Quaternion difference
 figure; grid on; hold on;

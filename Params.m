@@ -5,7 +5,7 @@
 dt = 0.01; 
 
 % Final time 
-tf = 1000; 
+tf = 500; 
 %% SATELLITE GEOMETRY PARAMETERS
 % Satellite Mass
 m = 260;
@@ -60,6 +60,14 @@ trackPointingVec=[0;1;0]; % y axis points the track
 % PD controller parameters
 zeta = 0.707;
 nFreq = 0.05;
+
+%% Reaction Wheel Parameters
+rWheel.torqueLim = 1; % Nm
+rWheel.m = 5;
+rWheel.r2 = 0.1524;
+rWheel.r1 = 0.1375;
+rWheel.Iz = (1/2)*rWheel.m*(rWheel.r2^2 + rWheel.r1^2);
+
 
 %% Thrusters
 %capabilities
@@ -157,6 +165,7 @@ yLog = zeros(9,(tf/dt)+2);
 tLog = 0:dt:(tf+dt);
 deltaULog = zeros(3,(tf/dt)+2);
 reactionWheelTorqueLog = zeros(3,(tf/dt)+2);
+reactionWheelSpeedLog = zeros(4,(tf/dt)+2);
 desiredAttitudeLog = zeros(4,(tf/dt)+2);
 
 meanLog         = zeros(length(meancomp),(tf/dt)+2);

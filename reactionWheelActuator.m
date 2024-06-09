@@ -1,5 +1,16 @@
-function reactionWheelTorque = reactionWheelActuator(torqueCmd)
-    persistent motorCmd motorCmdPrev motorAct motorActPrev
+function [reactionWheelTorque, wsOut] = reactionWheelActuator(x, torqueCmd, rWheel, dt)
+    persistent motorCmd motorCmdPrev motorAct motorActPrev wheelSpeeds
+    if isempty(wheelSpeeds)
+        wheelSpeeds = [0;0;0;0];
+    end
+
+    [wx, wy, wz] = deal(x(5), x(6), x(7));
+    
+    Lw = [rWheel.Iz*wheelSpeeds(1);
+          rWheel.Iz*wheelSpeeds(2);
+          rWheel.Iz*wheelSpeeds(3);
+          rWheel.Iz*wheelSpeeds(4)];
+
     actuatorMatrix = 1/sqrt(3) * [-1  1  1 -1;
                                   -1 -1  1  1;
                                    1  1  1  1];
@@ -17,8 +28,12 @@ function reactionWheelTorque = reactionWheelActuator(torqueCmd)
     end
 
     motorAct = 0.90483741803596*motorActPrev + 0.0951625819640404*motorCmdPrev; % 1/(tau + s) delay tau = 0.03 s
-    motorAct = min(1, max(-1, motorAct)); % saturate @ 1 Nm for each of the 4 wheels
-    reactionWheelTorque = actuatorMatrix*motorAct;
+    motorAct = min(rWheel.torqueLim, max(-rWheel.torqueLim, motorAct)); % saturate @ 1 Nm for each of the 4 wheels
+    reactionWheelTorque = actuatorMatrix*motorAct + cross([wx; wy; wz], actuatorMatrix*Lw);
+
+    alphaW = (1/rWheel.Iz)*motorAct;
+    wheelSpeeds = wheelSpeeds + dt*alphaW;
+    wsOut = wheelSpeeds;
 
     motorActPrev = motorAct;
     motorCmdPrev = motorCmd;
