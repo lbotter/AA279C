@@ -6,8 +6,13 @@ tLog=zeros(span,1);
 thrustLog=zeros(4,span);
 thrustPush=zeros(6,span);
 for i=1:100
-    uReq=[0;0;0;0;10e-2;0];
+    uReq=[0;0;10e-2;0;0;0];
+    i
+    if i<80
     [uThrusters,T]=thrusterActuator(uReq,Tmin,Tmax,AThrusters,EThrusters);
+    else 
+        [uThrusters,T]=thrusterActuator([0;0;0;0;0;0],Tmin,Tmax,AThrusters,EThrusters);
+    end
     thrustLog(:,i)=T;
     thrustPush(:,i)=uThrusters;
     tLog(i)=i;

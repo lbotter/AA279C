@@ -31,11 +31,10 @@ for k = 0:length(0:dt:tf)
 
     % Computing the desired attitude
     qDes=desiredAttitude(earthPointingVec, trackPointingVec,-xNew(8:10),principal2Inertial(xNew(1:4))*xNew(11:13));
-
     [deltaU, ~] = controlLarge(meanNew, qDes, kp, kd);
 
     reactionWheelTorque = reactionWheelActuator(deltaU);
-    [uThrusters,T]=thrusterActuator([reactionWheelTorque;0;0;0],Tmin,Tmax,AThrusters,EThrusters);
+    [uThrusters,T]=thrusterActuator(uThrustInput,Tmin,Tmax,AThrusters,EThrusters);
 
     % figure(1)
     % plot(currentTime,deltaU,'ob');

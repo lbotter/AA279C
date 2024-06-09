@@ -8,20 +8,39 @@ function [uOutput,T] = thrusterActuator(uInput,tmin,tmax,A,E)
 %               E       :   thrusters mounting directions   [3xn]
 %   OUTPUT:     uOutput :   resultin torque/force to sys    [6x1]
 %               fuelFina:   remaining fuel
+persistent TCmd TCmdPrev TAct TActPrev
 AStar=pinv(A);
 EStar=pinv(E);
 uOutput=uInput;
-T=AStar*uInput(1:3)+EStar*uInput(4:6);
+TCmd=AStar*uInput(1:3)+EStar*uInput(4:6);
 k=0;
-if max(T)>=tmax
-    k=-tmax+max(T);
+if max(TCmd)>=tmax
+    k=-tmax+max(TCmd);
 end
-if min(T)<=tmin
-    k=-min(T)+tmin;
+TCmd=TCmd+k*ones(length(TCmd),1);
+if min(TCmd)<=tmin
+    k=-min(TCmd)+tmin;
 end
-T=T+k*ones(length(T),1);
-uOutput(1:3)=A*T;
-uOutput(4:6)=E*T;
-dU=uOutput-uInput;
+TCmd=TCmd+k*ones(length(TCmd),1);
+if isempty(TActPrev)
+    TActPrev = [0;0;0;0];
+    TCmdPrev = TCmd;
+end
+
+tau = 0.05;  % Time constant for delay
+delta_t = 0.1;  % Time step
+alpha = delta_t / (tau + delta_t);
+
+if norm(uInput)<1e-6
+    TCmd=0*TCmd;
+end
+
+TAct = (1 - alpha) * TActPrev + alpha * TCmdPrev;  % Updated delay equation
+uOutput(1:3)=A*TAct;
+uOutput(4:6)=E*TAct;
+TActPrev = TAct
+T=TAct;
+TCmdPrev = TCmd;
+
 end
 
