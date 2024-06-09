@@ -37,6 +37,7 @@ for k = 0:length(0:dt:tf)
     [deltaU, ~] = controlLarge(meanNew, qDes, kp, kd);
 
     [reactionWheelTorque, wsOut] = reactionWheelActuator(x, deltaU, rWheel, dt);
+    [uThrusters,T]=thrusterActuator(uThrustInput,Tmin,Tmax,AThrusters,EThrusters);
 
     % figure(1)
     % plot(currentTime,deltaU,'ob');
@@ -73,8 +74,12 @@ for k = 0:length(0:dt:tf)
     reactionWheelSpeedLog(:,k+1) = wsOut;
     desiredAttitudeLog(:,k+1)=qDes;
 
+    thrustLog(:,k+1)=T;
+    thrustPush(:,k+1)=uThrusters;
+
 end
 
+thrustAnalysis
 controlAnalysis;
 % plotResults;
 %% functions

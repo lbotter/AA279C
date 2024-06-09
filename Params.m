@@ -5,7 +5,7 @@
 dt = 0.01; 
 
 % Final time 
-tf = 500; 
+tf = 600; 
 %% SATELLITE GEOMETRY PARAMETERS
 % Satellite Mass
 m = 260;
@@ -82,17 +82,16 @@ tburn=2000; % Total burn time for each thruster
 N=4;
 % top left
 r(:,1)=[0.05;-2.7892;1.6];
-e(:,1)=[0.5;-1;0.5]/norm([0.5;-1;0.5]);
+e(:,1)=-[0.5;-1;0.5]/norm([0.5;-1;0.5]);
 % top right
 r(:,2)=[0.05;-2.7892;-1.6];
-e(:,2)=[0.5;-1;-0.5]/norm([0.5;-1;0.5]);
+e(:,2)=-[0.5;-1;-0.5]/norm([0.5;-1;0.5]);
 % bottom left
 r(:,3)=[-0.05;-2.7892;1.6];
-e(:,3)=[-0.5;-1;0.5]/norm([0.5;-1;0.5]);
+e(:,3)=-[-0.5;-1;0.5]/norm([0.5;-1;0.5]);
 % bottom right
 r(:,4)=[-0.05;-2.7892;-1.6];
-e(:,4)=[-0.5;-1;-0.5]/norm([0.5;-1;0.5]);
-
+e(:,4)=-[-0.5;-1;-0.5]/norm([0.5;-1;0.5]);
 
 
 %% EKF PARAMETERS
@@ -137,6 +136,7 @@ AThrusters=zeros(3,N);
 for i=1:N
     AThrusters(:,i)=cross(r(:,i),e(:,i));
 end
+EThrusters=e;
 
 % Building the vectors to propagate
 x = [q0; w0; p0; v0];
@@ -158,6 +158,7 @@ magneticTorqueLog       = zeros(3,(tf/dt)+2);
 solarTorqueLog          = zeros(3,(tf/dt)+2);
 aeroTorqueLog           = zeros(3,(tf/dt)+2);
 aeroForceLog            = zeros(3,(tf/dt)+2);
+disturbLog              = zeros(3,(tf/dt)+2);
 
 uLog = zeros(6,(tf/dt)+2);
 xLog = zeros(length(x),(tf/dt)+2);
@@ -173,4 +174,6 @@ meanPredictLog  = zeros(length(meancomp),(tf/dt)+2);
 varianceLog     = zeros(length(meancomp),(tf/dt)+2);
 preFitLog       = zeros(9,(tf/dt)+2);
 postFitLog      = zeros(9,(tf/dt)+2);
+thrustLog       = zeros(N,(tf/dt)+2);
+thrustPush      = zeros(6,(tf/dt)+2);
 a=[0;0;0];
