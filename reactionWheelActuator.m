@@ -1,5 +1,10 @@
-function [reactionWheelTorque, wsOut] = reactionWheelActuator(x, torqueCmd, rWheel, dt)
+function [reactionWheelTorque, wsOut] = reactionWheelActuator(x, torqueCmd, rWheel, dt,reset)
     persistent motorCmd motorCmdPrev motorAct motorActPrev wheelSpeeds
+    if reset
+        wheelSpeeds= [0;0;0;0];
+        reactionWheelTorque=0;
+        wsOut=wheelSpeeds;
+    end
     if isempty(wheelSpeeds)
         wheelSpeeds = [0;0;0;0];
     end
@@ -11,14 +16,8 @@ function [reactionWheelTorque, wsOut] = reactionWheelActuator(x, torqueCmd, rWhe
           rWheel.Iz*wheelSpeeds(3);
           rWheel.Iz*wheelSpeeds(4)];
 
-    actuatorMatrix = 1/sqrt(3) * [-1  1  1 -1;
-                                  -1 -1  1  1;
-                                   1  1  1  1];
-
-    actuatorMatrixInv = 3/(4*sqrt(3)) * [-1 -1  1;
-                                          1 -1  1;
-                                          1  1  1;
-                                         -1  1  1];
+    actuatorMatrix = rWheel.matrix;
+    actuatorMatrixInv = rWheel.imatrix;
 
     motorCmd = actuatorMatrixInv * torqueCmd + normrnd(0, 0.01, 4, 1);
 
@@ -34,7 +33,6 @@ function [reactionWheelTorque, wsOut] = reactionWheelActuator(x, torqueCmd, rWhe
     alphaW = (1/rWheel.Iz)*motorAct;
     wheelSpeeds = wheelSpeeds + dt*alphaW;
     wsOut = wheelSpeeds;
-
     motorActPrev = motorAct;
     motorCmdPrev = motorCmd;
 end

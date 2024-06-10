@@ -22,7 +22,7 @@ for k = 0:length(0:dt:tf)
     aeroTorque = aeroTorques(x, geometryPrincipalFrame);  
     
     % u: external input, [tx; ty; tz; fx; fy; fz]
-    u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque + reactionWheelTorque;
+    u(1:3) = gravityGradientTorque + magneticTorque + solarTorque + aeroTorque + reactionWheelTorque+ uThrusters(1:3);
     % Update the ground truth
     [xNew, y] = fDiscreteRK4(x, u, currentTime, dt);
 
@@ -33,18 +33,17 @@ for k = 0:length(0:dt:tf)
     qDes=desiredAttitude(earthPointingVec, trackPointingVec,-xNew(8:10),principal2Inertial(xNew(1:4))*xNew(11:13));
     %deltaULarge=controlLinear(meanNew(1:4),qDes,meanNew(5:7),responseF);
     % [deltaU,a]=controlLarge(meanNew(1:4),qDes,a,dt,kp,kd);
-
     [deltaU, ~] = controlLarge(meanNew, qDes, kp, kd);
-
-    [reactionWheelTorque, wsOut] = reactionWheelActuator(x, deltaU, rWheel, dt);
-    [uThrusters,T]=thrusterActuator(uThrustInput,Tmin,Tmax,AThrusters,EThrusters);
-
-    % figure(1)
-    % plot(currentTime,deltaU,'ob');
-    % hold on
-    % plot(currentTime,deltaULarge,'+r');
-    % pause(0.2)
-    % hold on
+    if max(abs(wsOut))<rWheel.wmax && desatTime==0
+        [reactionWheelTorque, wsOut] = reactionWheelActuator(x, deltaU, rWheel, dt,false);
+        uThrustInput=zeros(6,1);
+        [uThrusters,T]=thrusterActuator(uThrustInput,Thruster,dt);
+    else
+        [uThrustInput,desatTime] = reactionWheelDesaturation(rWheel,wsOut,dt,desatTime);
+        [reactionWheelTorque, wsOut] = reactionWheelActuator(x,- uThrustInput(1:3), rWheel, dt,false);
+        uThrustInput(1:3)=uThrustInput(1:3)+deltaU;
+        [uThrusters,T]=thrusterActuator(uThrustInput,Thruster,dt);
+    end
 
     % Update the variables in the loop
     x = xNew;
@@ -56,31 +55,30 @@ for k = 0:length(0:dt:tf)
     xLog(:,k+1) = x;
     yLog(:,k+1) = y;
 
-    meanLog(:,k+1) = meancomp;
-    meanPredictLog(:,k+1) = meanPredict;
-    varianceLog(:,k+1) = [cov(1,1), cov(2,2), cov(3,3), cov(4,4), cov(5,5), cov(6,6), cov(7,7)];
-    preFitLog(:,k+1)=prefit;
-    postFitLog(:,k+1)=postfit;
-    gravityTorqueMagLog(:,k+1) = norm(gravityGradientTorque);
-    magneticTorqueMagLog(:,k+1) = norm(magneticTorque);
-    solarTorqueMagLog(:,k+1) = norm(solarTorque);
-    aeroTorqueMagLog(:,k+1) = norm(aeroTorque);
-    gravityTorqueLog(:,k+1) = gravityGradientTorque;
-    magneticTorqueLog(:,k+1) = magneticTorque;
-    solarTorqueLog(:,k+1) = solarTorque;
-    aeroTorqueLog(:,k+1) = aeroTorque;
+    % meanLog(:,k+1) = meancomp;
+    % meanPredictLog(:,k+1) = meanPredict;
+    % varianceLog(:,k+1) = [cov(1,1), cov(2,2), cov(3,3), cov(4,4), cov(5,5), cov(6,6), cov(7,7)];
+    % preFitLog(:,k+1)=prefit;
+    % postFitLog(:,k+1)=postfit;
+    % gravityTorqueMagLog(:,k+1) = norm(gravityGradientTorque);
+    % magneticTorqueMagLog(:,k+1) = norm(magneticTorque);
+    % solarTorqueMagLog(:,k+1) = norm(solarTorque);
+    % aeroTorqueMagLog(:,k+1) = norm(aeroTorque);
+    % gravityTorqueLog(:,k+1) = gravityGradientTorque;
+    % magneticTorqueLog(:,k+1) = magneticTorque;
+    % solarTorqueLog(:,k+1) = solarTorque;
+    % aeroTorqueLog(:,k+1) = aeroTorque;
     deltaULog(:,k+1) = deltaU;
     reactionWheelTorqueLog(:,k+1) = reactionWheelTorque;
     reactionWheelSpeedLog(:,k+1) = wsOut;
     desiredAttitudeLog(:,k+1)=qDes;
-
     thrustLog(:,k+1)=T;
-    thrustPush(:,k+1)=uThrusters;
+    thrustPushLog(:,k+1)=uThrusters;
 
 end
 
-thrustAnalysis
-controlAnalysis;
+% thrustAnalysis
+% controlAnalysis;
 % plotResults;
 %% functions
 

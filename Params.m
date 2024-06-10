@@ -5,13 +5,10 @@
 dt = 0.01; 
 
 % Final time 
-tf = 600; 
+tf = 300; 
 %% SATELLITE GEOMETRY PARAMETERS
 % Satellite Mass
 m = 260;
-% Momentum wheel parameters
-IwheelZ = 5;  % kg*m^2
-wWheel = 100; % rad/s
 % Inertia tensor in body frame
 I_body=[5294.7835 -14.370084 -19.292192;
        -14.370084 5516.4558 -73.354553;
@@ -67,14 +64,23 @@ rWheel.m = 5;
 rWheel.r2 = 0.1524;
 rWheel.r1 = 0.1375;
 rWheel.Iz = (1/2)*rWheel.m*(rWheel.r2^2 + rWheel.r1^2);
+rWheel.dw = 0.04; %rad/s max dW for desaturation
+rWheel.wmax=400;
+rWheel.matrix=1/sqrt(3) * [-1  1  1 -1;
+                                  -1 -1  1  1;
+                                   1  1  1  1];
+rWheel.imatrix=3/(4*sqrt(3)) * [-1 -1  1;
+                                          1 -1  1;
+                                          1  1  1;
+                                         -1  1  1];
+
 
 
 %% Thrusters
 %capabilities
-Tmax=170e-3;   % Newton
-Tmin=20e-3;
-tburn=2000; % Total burn time for each thruster
-
+Thruster.Tmax=170e-2;   % Newton
+Thruster.Tmin=20e-3;
+Thruster.tburn=2000; % Total burn time for each thruster
 
 % Geometry
 
@@ -123,7 +129,6 @@ w0 = R_P2B.' * [0.01; 0.01; 0.01];
 n=mean_w;
 
 % PD controller 
-
 kd = 2*zeta*nFreq*[Ixx;
                    Iyy;
                    Izz];
@@ -132,11 +137,12 @@ kp = (nFreq^2)*[Ixx;
                 Iyy;
                 Izz];
 % Thrust matrix
-AThrusters=zeros(3,N);
+Thruster.A=zeros(3,N);
 for i=1:N
-    AThrusters(:,i)=cross(r(:,i),e(:,i));
+    Thruster.A(:,i)=cross(r(:,i),e(:,i));
 end
-EThrusters=e;
+Thruster.E=e;
+
 
 % Building the vectors to propagate
 x = [q0; w0; p0; v0];
@@ -145,35 +151,40 @@ meancomp = [q0; w0];
 meanPredict = [q0; w0];
 cov = 0.01*eye(length(meancomp));
 reactionWheelTorque = [0;0;0];
+desatTime=0;
+wsOut=0;
+uThrusters=zeros(6,1);
 
 % Initializing variables to store
-gravityTorqueMagLog     = zeros(1,(tf/dt)+2);
-magneticTorqueMagLog    = zeros(1,(tf/dt)+2);
-solarTorqueMagLog       = zeros(1,(tf/dt)+2);
-aeroTorqueMagLog        = zeros(1,(tf/dt)+2);
-aeroForceMagLog         = zeros(1,(tf/dt)+2);
+L=tf/dt+2;
+gravityTorqueMagLog     = zeros(1,L);
+magneticTorqueMagLog    = zeros(1,L);
+solarTorqueMagLog       = zeros(1,L);
+aeroTorqueMagLog        = zeros(1,L);
+aeroForceMagLog         = zeros(1,L);
 
-gravityTorqueLog        = zeros(3,(tf/dt)+2);
-magneticTorqueLog       = zeros(3,(tf/dt)+2);
-solarTorqueLog          = zeros(3,(tf/dt)+2);
-aeroTorqueLog           = zeros(3,(tf/dt)+2);
-aeroForceLog            = zeros(3,(tf/dt)+2);
-disturbLog              = zeros(3,(tf/dt)+2);
+gravityTorqueLog        = zeros(3,L);
+magneticTorqueLog       = zeros(3,L);
+solarTorqueLog          = zeros(3,L);
+aeroTorqueLog           = zeros(3,L);
+aeroForceLog            = zeros(3,L);
+disturbLog              = zeros(3,L);
 
-uLog = zeros(6,(tf/dt)+2);
-xLog = zeros(length(x),(tf/dt)+2);
-yLog = zeros(9,(tf/dt)+2);
+uLog = zeros(6,L);
+xLog = zeros(length(x),L);
+yLog = zeros(9,L);
 tLog = 0:dt:(tf+dt);
-deltaULog = zeros(3,(tf/dt)+2);
-reactionWheelTorqueLog = zeros(3,(tf/dt)+2);
-reactionWheelSpeedLog = zeros(4,(tf/dt)+2);
-desiredAttitudeLog = zeros(4,(tf/dt)+2);
 
-meanLog         = zeros(length(meancomp),(tf/dt)+2);
-meanPredictLog  = zeros(length(meancomp),(tf/dt)+2);
-varianceLog     = zeros(length(meancomp),(tf/dt)+2);
-preFitLog       = zeros(9,(tf/dt)+2);
-postFitLog      = zeros(9,(tf/dt)+2);
-thrustLog       = zeros(N,(tf/dt)+2);
-thrustPush      = zeros(6,(tf/dt)+2);
+deltaULog = zeros(3,L);
+reactionWheelTorqueLog = zeros(3,L);
+reactionWheelSpeedLog = zeros(4,L);
+desiredAttitudeLog = zeros(4,L);
+
+meanLog         = zeros(length(meancomp),L);
+meanPredictLog  = zeros(length(meancomp),L);
+varianceLog     = zeros(length(meancomp),L);
+preFitLog       = zeros(9,L);
+postFitLog      = zeros(9,L);
+thrustLog       = zeros(N,L);
+thrustPushLog   = zeros(6,L);
 a=[0;0;0];
